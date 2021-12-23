@@ -10,13 +10,14 @@
 	    locateFile: file => `https://sql.js.org/dist/${file}`
 	});
 	const dataPromise = fetch("/static/data_fixed.sqlite").then(res => res.arrayBuffer());
-	const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
-	const db = new SQL.Database(new Uint8Array(buf));
-	const stmt = db.exec("SELECT DISTINCT 처방한글명 FROM prescp");
-
-	// Bind values to the parameters and fetch the results of the query
-	// const result = stmt.getAsObject({':aval' : 1, ':bval' : 'world'});
-	console.log(result); // Will print {a:1, b:'world'}
+	
+	async function start() {
+		const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
+		const db = new SQL.Database(new Uint8Array(buf));
+		const stmt = db.exec("SELECT DISTINCT 처방한글명 FROM prescp");
+		console.log(result);
+	}
+	start();
 
 </script>
 </html>
