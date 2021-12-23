@@ -6,18 +6,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.1/sql-wasm.min.js" integrity="sha512-8YXJj9U1jXn8Bejc5Tiyj3mgx/u2J4XQf/HAXWX9LMCL0tdIv/WxIWoORonSO2+cRL0hHvy7QK5Mnz+jCWjPxA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
-    const sqlPromise = initSqlJs({
-	    locateFile: file => `https://sql.js.org/dist/${file}`
+	config = {
+      locateFile: file => `https://sql.js.org/dist/${file}`
+    }
+    initSqlJs(config).then(function(SQL){
+      const dataPromise = fetch("/static/data_fixed.sqlite").then(res => res.arrayBuffer()).then((data)=>{
+	  
+		  const db = new SQL.Database(new Uint8Array(data));
+		  
+		  // const stmt = db.prepare("SELECT * FROM test WHERE col1 BETWEEN $start AND $end");
+		  const stmt = db.prepare("SELECT DISTINCT 처방한글명 FROM prescp");
+		  
+		  while(stmt.step()) { //
+			const row = stmt.getAsObject();
+			console.log('Here is a row: ' + JSON.stringify(row));
+		  }
+		});
+	  
+	  });
 	});
-	const dataPromise = fetch("/static/data_fixed.sqlite").then(res => res.arrayBuffer());
-	
-	async function start() {
-		const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
-		const db = new SQL.Database(new Uint8Array(buf));
-		const stmt = db.exec("SELECT DISTINCT 처방한글명 FROM prescp");
-		console.log(result);
-	}
-	start();
+	  
+      
 
 </script>
 </html>
