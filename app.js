@@ -2,6 +2,11 @@ const config = {
   locateFile: file => `https://sql.js.org/dist/${file}`
 }
 
+function checkOnlyAddHerb() {
+  const el = document.getElementById('only-add-herb');
+  return el.checked;
+}
+
 function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupTolerance) {
   
   if(leftDepth<=0) {
@@ -39,11 +44,20 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
       const newPrescConst = [...prescConst, leftList[i]];
       
       const result = recursiveDepth(leftDepth - 1, leftList.slice(i + 1), newPrescConst, originalConst, dupTolerance);
-      if((result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
-        minLeftOver = result.leftOver;
-        minOverAdded = result.overAdded;
-        minPrescConst = result.prescConst;
-        minTotalSum = result.totalSum;
+      if(checkOnlyAddHerb()) {
+        if((result.leftOver < minLeftOver) && (result.overAdded == 0)) {
+          minLeftOver = result.leftOver;
+          minOverAdded = result.overAdded;
+          minPrescConst = result.prescConst;
+          minTotalSum = result.totalSum;
+        }
+      } else {
+        if((result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
+          minLeftOver = result.leftOver;
+          minOverAdded = result.overAdded;
+          minPrescConst = result.prescConst;
+          minTotalSum = result.totalSum;
+        }
       }
     }
     return {prescConst: minPrescConst, leftOver: minLeftOver, totalSum: minTotalSum, overAdded: minOverAdded};
@@ -195,6 +209,8 @@ function app() {
   <div id="analysis-board">
     <div className="card">
       <div className="card-body">
+        <label id="only-add-herb-label" htmlFor={"only-add-herb"}><input type="checkbox" id="only-add-herb" />減味 배제(加味만 고려)</label>
+      
         <label id="convert-herb-part-label" htmlFor={"convert-herb-part"}><input type="checkbox" id="convert-herb-part" />동일 약재 시 포제 구분 (체크 안 함 권장)</label>
         <label id="least-match-herb-number-label" htmlFor={"least-match-herb-number"}>기본방 최소 일치 본초 수 :&nbsp;<input type="number" id="least-match-herb-number" defaultValue="3" min="1" /></label>
         <label id="max-basic-herb-number-label" htmlFor={"max-basic-herb-number"}>기본방 최대 본초 수 :&nbsp;<input type="number" id="max-basic-herb-number" defaultValue="10" min="1" /></label>
@@ -263,13 +279,31 @@ function app() {
             }
             console.log(i, result);
             
-            if((result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
+            if(checkOnlyAddHerb()) {
+              if((result.leftOver < minLeftOver) && (result.overAdded == 0)) {
+                minLeftOver = result.leftOver;
+                minOverAdded = result.overAdded;
+                minPrescConst = result.prescConst;
+                minTotalSum = result.totalSum;
+                wellTarget = i.toString();
+              }
+            } else {
+              if((result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
+                minLeftOver = result.leftOver;
+                minOverAdded = result.overAdded;
+                minPrescConst = result.prescConst;
+                minTotalSum = result.totalSum;
+                wellTarget = i.toString();
+              }
+            }
+            
+            /*if((result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
               minLeftOver = result.leftOver;
               minOverAdded = result.overAdded;
               minPrescConst = result.prescConst;
               minTotalSum = result.totalSum;
               wellTarget = i.toString();
-            }
+            }*/
             let leftOver = JSON.parse(JSON.stringify(processedHerbs));
             let totalSum = []
             for(let i=0;i<result.prescConst.length;i++) {

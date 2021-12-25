@@ -49,6 +49,11 @@
   width: 650px;
   margin: 10px;
 }
+
+#only-add-herb-label {
+  display: block;
+}
+
 #convert-herb-part-label {
   display: block;
 }
