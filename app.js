@@ -80,11 +80,11 @@ function app() {
   }
   
   if((Object.keys(prescriptions).length == 0) && db) {
-    const stmt = db.prepare("SELECT DISTINCT 처방한자명, 처방한글명, 출처, 페이지 FROM prescp WHERE 처방한자명 != '';");
+    const stmt = db.prepare("SELECT DISTINCT 처방한자명, 처방한글명, 출전, 출처, 페이지 FROM prescp WHERE 처방한자명 != '';");
     let _prescriptions = {};
     while(stmt.step()) {
       const row = stmt.getAsObject();
-      _prescriptions[row['처방한자명'].replace(/\((.*)\)/g, '')] = row['처방한글명'].replace(/\((.*)\)/g, '') + '/' + row['출처'] + '/' + row['페이지'].toString() + 'p';
+      _prescriptions[row['처방한자명'].replace(/\((.*)\)/g, '') + ((row['출전']) ? ('[' +  row['출전'] + ']') : '') + ' / ' + row['처방한글명'].replace(/\((.*)\)/g, '') + ' / ' + row['출처'] + ' / ' + row['페이지'].toString() + 'p'] = row['처방한자명'].replace(/\((.*)\)/g, '') + '/' + row['처방한글명'].replace(/\((.*)\)/g, '') + '/' + row['출처'] + '/' + row['페이지'].toString();
     }
     console.log(_prescriptions);
     setPrescriptions(_prescriptions);
@@ -105,7 +105,7 @@ function app() {
               <select id="prescription-list-select" name="prescription-list-select" size={15}>  
               {
                 Object.keys(prescriptions).filter((item) => (item.indexOf(filterPrescp) != -1) || (prescriptions[item].indexOf(filterPrescp) != -1)).map((item, i) => {
-                  return <option value={item + '/' + prescriptions[item]}>{item + '(' + prescriptions[item] + ')'}</option>
+                  return <option value={prescriptions[item]}>{item}</option>
                 })
               }
               </select>
@@ -117,8 +117,8 @@ function app() {
               const prescp = selArray[0].value;
               const prescpHanja = prescp.split('/')[0];
               const prescpHangul = prescp.split('/')[1];
-              const prescpFrom = prescp.split('/')[2];
-              const prescpPage = parseInt(prescp.split('/')[3].replace('p', ''));
+              const prescpFrom = prescp.split('/')[3];
+              const prescpPage = parseInt(prescp.split('/')[4]);
               
               const stmt = db.prepare(`SELECT DISTINCT 약재한자명 FROM prescp WHERE 처방한자명 = '${prescpHanja}' AND 처방한글명='${prescpHangul}' AND 출처='${prescpFrom}' AND 페이지='${prescpPage}' AND 약재한자명 != '' AND 약재한자명 IS NOT NULL AND 약재타입 != 'F';`);
               

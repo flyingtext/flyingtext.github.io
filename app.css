@@ -1,6 +1,6 @@
 #content {
   display: inline-flex;
-  width: 1230px;
+  width: 1290px;
 }
 #add-list {
   display: inline-block;
@@ -11,7 +11,7 @@
 }
 #prescription-list-select {
   height: 240px;
-  width: 250px;
+  width: 310px;
   font-size: 9pt;
 }
 #herb-list {
@@ -20,11 +20,11 @@
 }
 #herb-list-select {
   height: 240px;
-  width: 250px;
+  width: 310px;
   font-size: 9pt;
 }
 #analysis-target {
-  height: 100%;
+  height: 95%;
   display: inline-block;
   margin: 10px;
   bottom: 10px;
