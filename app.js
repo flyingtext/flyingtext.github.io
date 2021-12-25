@@ -115,7 +115,7 @@ function app() {
               const selArray = Array.from(sel.selectedOptions);
               if(selArray.length == 0) return;
               const prescp = selArray[0].value;
-              const prescpHanja = prescp.split('/')[0];
+              const prescpHanja = prescp.split('/')[0].split('[')[0];
               const prescpHangul = prescp.split('/')[1];
               const prescpFrom = prescp.split('/')[3];
               const prescpPage = parseInt(prescp.split('/')[4]);
