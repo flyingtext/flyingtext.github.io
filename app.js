@@ -115,10 +115,10 @@ function app() {
               const selArray = Array.from(sel.selectedOptions);
               if(selArray.length == 0) return;
               const prescp = selArray[0].value;
-              const prescpHanja = prescp.split('/')[0].split('[')[0];
+              const prescpHanja = prescp.split('/')[0];
               const prescpHangul = prescp.split('/')[1];
-              const prescpFrom = prescp.split('/')[3];
-              const prescpPage = parseInt(prescp.split('/')[4]);
+              const prescpFrom = prescp.split('/')[2];
+              const prescpPage = parseInt(prescp.split('/')[3]);
               
               const stmt = db.prepare(`SELECT DISTINCT 약재한자명 FROM prescp WHERE 처방한자명 = '${prescpHanja}' AND 처방한글명='${prescpHangul}' AND 출처='${prescpFrom}' AND 페이지='${prescpPage}' AND 약재한자명 != '' AND 약재한자명 IS NOT NULL AND 약재타입 != 'F';`);
               
