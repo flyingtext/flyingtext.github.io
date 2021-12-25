@@ -4,7 +4,7 @@ const config = {
 
 function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupTolerance) {
   
-  if(leftDepth==0) {
+  if(leftDepth<=0) {
     let leftOver = originalConst;
     let totalSum = []
     for(let i=0;i<prescConst.length;i++) {
@@ -14,6 +14,7 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
     totalSum = [...new Set(totalSum)];
     let overAdded = totalSum.filter(n => !(originalConst.includes(n))).length;
     leftOver = leftOver.length;
+    
     return {prescConst, leftOver, totalSum, overAdded};
   } else {
     let minLeftOver = 9999999999;
@@ -21,7 +22,6 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
     let minPrescConst = [];
     let minTotalSum = [];
     for(let i=0;i<leftList.length - 1;i++) {
-      
       let totalSum = [];
       for(let j=0;j<prescConst.length;j++) {
         totalSum = [...totalSum, ...prescConst[j]['herbConst']];
@@ -32,7 +32,9 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
       const newCount = newTotalSum.length - totalSum.length;
       const dupCount = leftList[i]['herbConst'].length - newCount;
       // console.log('check', totalSum, newTotalSum, dupCount);
-      if(dupTolerance < dupCount) continue;
+      if(dupTolerance < dupCount) {
+        continue;
+      }
       
       const newPrescConst = [...prescConst, leftList[i]];
       
@@ -240,7 +242,7 @@ function app() {
           while(stmt.step()) {
             const row = stmt.getAsObject();
             if(row['herbCount'] == processedHerbs.length) continue;
-            if(row['herbCount'] / row['basicCount'] < 0.5) continue;
+            if(row['herbCount'] / row['basicCount'] <= 0.5) continue;
             row['herbConst'] = row['herbConst'].split(',');
             _prescp.push(row);
           }
