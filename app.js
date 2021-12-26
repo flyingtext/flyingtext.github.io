@@ -33,7 +33,7 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
     let minOverAdded = 9999999999;
     let minPrescConst = [];
     let minTotalSum = [];*/
-    for(let i=0;i<leftList.length - 1;i++) {
+    for(let i=0;i<leftList.length;i++) {
       let totalSum = [];
       for(let j=0;j<prescConst.length;j++) {
         totalSum = [...totalSum, ...prescConst[j]['herbConst']];
@@ -43,22 +43,29 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
       
       const newCount = newTotalSum.length - totalSum.length;
       const dupCount = leftList[i]['herbConst'].length - newCount;
-      // console.log('check', totalSum, newTotalSum, dupCount);
+      
+      console.log('check', leftList[i]['처방한자명'], totalSum, newTotalSum, dupCount);
+      
       if(dupTolerance < dupCount) {
         continue;
       }
       
+      console.log('check', leftList[i]['처방한자명'], totalSum, newTotalSum, dupCount);
+      
       const newPrescConst = [...prescConst, leftList[i]];
       
       const result = recursiveDepth(leftDepth - 1, leftList.slice(i + 1), newPrescConst, originalConst, dupTolerance);
+      console.log('result', result, totalResult);
       if(checkOnlyAddHerb()) {
         if((result.leftOver < totalResult.minLeftOver) && (result.overAdded == 0)) {
           totalResult.minLeftOver = result.leftOver;
           totalResult.minOverAdded = result.overAdded;
           totalResult.minPrescConst = [result.prescConst];
           totalResult.minTotalSum = result.totalSum;
+          console.log('new passed');
         } else if ((result.leftOver == totalResult.minLeftOver) && (result.overAdded == 0)) {
           totalResult.minPrescConst.push(result.prescConst);
+          console.log('passed');
         }
       } else {
         if((result.leftOver + result.overAdded) < (totalResult.minLeftOver + totalResult.minOverAdded)) {
