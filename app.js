@@ -289,7 +289,7 @@ function app() {
           } else {
             processedHerbs = selectedHerbs;
           }
-          console.log('ph', processedHerbs);
+
           setTargetHerbText('- 조합 대상 선정 : ' + processedHerbs.join(', '));
           
           // Process #2
@@ -369,18 +369,15 @@ function app() {
               
               let leftOver = JSON.parse(JSON.stringify(processedHerbs));
               let totalSum = []
-              console.log('pc', result.prescConst);
               for(let k=0;k<result.prescConst.length;k++) {
                 leftOver = leftOver.filter(n => !(result.prescConst[k]['herbConst'].includes(n)));
                 totalSum = [...totalSum, ...result.prescConst[k]['herbConst']];
-                console.log('lo', leftOver);
               }
               totalSum = [...new Set(totalSum)];
               let overAdded = totalSum.filter(n => !(processedHerbs.includes(n)));
               
               result.overAdded = overAdded;
               result.leftOver = leftOver;
-              console.log(result);
               computated[i.toString()].push(result);
             }
             
