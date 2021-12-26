@@ -66,7 +66,7 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
           totalResult.minOverAdded = result.overAdded;
           totalResult.minPrescConst = [result.prescConst];
           totalResult.minTotalSum = result.totalSum;
-        } else if ((result.leftOver == totalResult.minLeftOver) && (result.overAdded == 0)) {
+        } else if ((result.leftOver + result.overAdded) == (totalResult.minLeftOver + totalResult.minOverAdded)) {
           totalResult.minPrescConst.push(result.prescConst);
         }
       }
