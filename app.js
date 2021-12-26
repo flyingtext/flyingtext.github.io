@@ -7,6 +7,13 @@ function checkOnlyAddHerb() {
   return el.checked;
 }
 
+let totalResult = {
+  minLeftOver: 9999999999,
+  minOverAdded: 9999999999,
+  minPrescConst: [],
+  minTotalSum: []
+};
+
 function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupTolerance) {
   
   if(leftDepth<=0) {
@@ -21,6 +28,50 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
     leftOver = leftOver.length;
     
     return {prescConst, leftOver, totalSum, overAdded};
+  } else if(leftDepth == 1) {
+    /* let minLeftOver = 9999999999;
+    let minOverAdded = 9999999999;
+    let minPrescConst = [];
+    let minTotalSum = [];*/
+    for(let i=0;i<leftList.length - 1;i++) {
+      let totalSum = [];
+      for(let j=0;j<prescConst.length;j++) {
+        totalSum = [...totalSum, ...prescConst[j]['herbConst']];
+      }
+      totalSum = [...new Set(totalSum)];
+      const newTotalSum = [...new Set([...totalSum, ...leftList[i]['herbConst']])];
+      
+      const newCount = newTotalSum.length - totalSum.length;
+      const dupCount = leftList[i]['herbConst'].length - newCount;
+      // console.log('check', totalSum, newTotalSum, dupCount);
+      if(dupTolerance < dupCount) {
+        continue;
+      }
+      
+      const newPrescConst = [...prescConst, leftList[i]];
+      
+      const result = recursiveDepth(leftDepth - 1, leftList.slice(i + 1), newPrescConst, originalConst, dupTolerance);
+      if(checkOnlyAddHerb()) {
+        if((result.leftOver < totalResult.minLeftOver) && (result.overAdded == 0)) {
+          totalResult.minLeftOver = result.leftOver;
+          totalResult.minOverAdded = result.overAdded;
+          totalResult.minPrescConst = [result.prescConst];
+          totalResult.minTotalSum = result.totalSum;
+        } else if ((result.leftOver == totalResult.minLeftOver) && (result.overAdded == 0)) {
+          totalResult.minPrescConst.push(result.prescConst);
+        }
+      } else {
+        if((result.leftOver + result.overAdded) < (totalResult.minLeftOver + totalResult.minOverAdded)) {
+          totalResult.minLeftOver = result.leftOver;
+          totalResult.minOverAdded = result.overAdded;
+          totalResult.minPrescConst = [result.prescConst];
+          totalResult.minTotalSum = result.totalSum;
+        } else if ((result.leftOver == totalResult.minLeftOver) && (result.overAdded == 0)) {
+          totalResult.minPrescConst.push(result.prescConst);
+        }
+      }
+    }
+    return {prescConst: totalResult.minPrescConst, leftOver: totalResult.minLeftOver, totalSum: totalResult.minTotalSum, overAdded: totalResult.minOverAdded};
   } else {
     let minLeftOver = 9999999999;
     let minOverAdded = 9999999999;
@@ -250,9 +301,9 @@ function app() {
           let duplicateToleranceNumber = document.getElementById('duplicate-tolerance-number').value;
           
           if(!document.getElementById("convert-herb-part").checked) {
-            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}")) OR (수치전약재명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as basicCount, group_concat(CASE WHEN LENGTH(TRIM(수치전약재명))=0 THEN 약재한자명 ELSE 수치전약재명 END) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 ORDER BY q3.herbCount DESC;`);
+            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}")) OR (수치전약재명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as basicCount, group_concat(CASE WHEN LENGTH(TRIM(수치전약재명))=0 THEN 약재한자명 ELSE 수치전약재명 END) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
           } else {
-            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as basicCount, group_concat(약재한자명) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 ORDER BY q3.herbCount DESC;`);
+            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as basicCount, group_concat(약재한자명) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
           }
           let _prescp = [];
           while(stmt.step()) {
@@ -272,13 +323,19 @@ function app() {
           let wellTarget = null;
 
           for(let i=1;i<=maxBasicPrescNumber;i++) {
+            totalResult = {
+              minLeftOver: 9999999999,
+              minOverAdded: 9999999999,
+              minPrescConst: [],
+              minTotalSum: []
+            };
             const result = recursiveDepth(i, _prescp, [], processedHerbs, duplicateToleranceNumber);
+            computated[i.toString()] = [];
             if((!result.prescConst) || (result.prescConst.length == 0)) {
-              computated[i.toString()] = null;
               continue;
             }
             console.log(i, result);
-            
+            /*
             if(checkOnlyAddHerb()) {
               if((result.leftOver < minLeftOver) && (result.overAdded == 0)) {
                 minLeftOver = result.leftOver;
@@ -296,7 +353,7 @@ function app() {
                 wellTarget = i.toString();
               }
             }
-            
+            */
             /*if((result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
               minLeftOver = result.leftOver;
               minOverAdded = result.overAdded;
@@ -304,24 +361,35 @@ function app() {
               minTotalSum = result.totalSum;
               wellTarget = i.toString();
             }*/
-            let leftOver = JSON.parse(JSON.stringify(processedHerbs));
-            let totalSum = []
-            for(let i=0;i<result.prescConst.length;i++) {
-              leftOver = leftOver.filter(n => !(result.prescConst[i]['herbConst'].includes(n)));
-              totalSum = [...totalSum, ...result.prescConst[i]['herbConst']];
+            for(let j=0;j<totalResult.minPrescConst.length;j++) {
+              
+              let result = {
+                prescConst: totalResult.minPrescConst[j]
+              };
+              
+              let leftOver = JSON.parse(JSON.stringify(processedHerbs));
+              let totalSum = []
+              console.log('pc', result.prescConst);
+              for(let k=0;k<result.prescConst.length;k++) {
+                leftOver = leftOver.filter(n => !(result.prescConst[k]['herbConst'].includes(n)));
+                totalSum = [...totalSum, ...result.prescConst[k]['herbConst']];
+                console.log('lo', leftOver);
+              }
+              totalSum = [...new Set(totalSum)];
+              let overAdded = totalSum.filter(n => !(processedHerbs.includes(n)));
+              
+              result.overAdded = overAdded;
+              result.leftOver = leftOver;
+              console.log(result);
+              computated[i.toString()].push(result);
             }
-            totalSum = [...new Set(totalSum)];
-            let overAdded = totalSum.filter(n => !(processedHerbs.includes(n)));
             
-            result.overAdded = overAdded;
-            result.leftOver = leftOver;
-            computated[i.toString()] = result;
           }
           
           setResultObj(computated);
-          setBestResult(wellTarget);
+          // setBestResult(wellTarget);
           
-          console.log(minPrescConst, minLeftOver, minOverAdded, minTotalSum);
+          console.log(computated);
 
         }}>가감 조합 검색</button>
         <div>
@@ -335,22 +403,32 @@ function app() {
             <ol>
               {
                 (Object.keys(resultObj).length != 0) && Array.from({length: document.getElementById('max-basic-prescription-number').value}, (_, i) => i + 1).map((item) => {
-                  if(!resultObj[item.toString()]) {
+                  if(resultObj[item.toString()].length == 0) {
                     return <li>기본방 {item.toString()}개 기반 해당 조건 하 검색된 가감 없음</li>
                   }
-                  const presc = resultObj[item.toString()].prescConst.map((item) => item['처방한자명']);
-                  const prescInside = resultObj[item.toString()].prescConst.map((item) => item['herbConst']);
-                  let resultString = `${presc[0]}(${prescInside[0].join(', ')})`;
+                  return (
+                    <li>
+                      <ul>
+                        {resultObj[item.toString()].map((item) => {
+                          const presc = item.prescConst.map((item) => item['처방한자명']);
+                          const prescInside = item.prescConst.map((item) => item['herbConst']);
+                          let resultString = `${presc[0]}(${prescInside[0].join(', ')})`;
+                          
+                          for(let n=1;n<presc.length;n++) {
+                            resultString = resultString + ' 合 ' + presc[n] + '(' + prescInside[n].join(', ') + ')';
+                          }
+                          return <li><b>{resultString}</b><span className="add-remove-count">&nbsp;中 加味 {item.leftOver.length.toString()}&nbsp;減味 {item.overAdded.length.toString()}</span>
+                            <ul>
+                            {(item.leftOver.length != 0) && <li>加 {item.leftOver.join(', ')}</li>}
+                              {(item.overAdded.length != 0) && <li>減 {item.overAdded.join(', ')}</li>}
+                            </ul>
+                          </li>
+                        })}
+                      </ul>
+                    </li>
+                  )
                   
-                  for(let n=1;n<presc.length;n++) {
-                    resultString = resultString + ' 合 ' + presc[n] + '(' + prescInside[n].join(', ') + ')';
-                  }
-                  return <li><b>{resultString}</b><span className="add-remove-count">&nbsp;中 加味 {resultObj[item.toString()].leftOver.length.toString()}&nbsp;減味 {resultObj[item.toString()].overAdded.length.toString()}</span>
-                    <ul>
-                    {(resultObj[item.toString()].leftOver.length != 0) && <li>加 {resultObj[item.toString()].leftOver.join(', ')}</li>}
-                      {(resultObj[item.toString()].overAdded.length != 0) && <li>減 {resultObj[item.toString()].overAdded.join(', ')}</li>}
-                    </ul>
-                  </li>
+                  
                 })
               }
             </ol>
