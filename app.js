@@ -428,7 +428,7 @@ function app() {
                           
                           for(let n=1;n<presc.length;n++) {
                             if(prescFrom[n] != '') {
-                              resultString = resultString + ' 合 ' + presc[n] + '[' + prescFrom[n] + 'p]' + '(' + prescInside[n].join(', ') + ')';
+                              resultString = resultString + ' 合 ' + presc[n] + '[' + prescFrom[n] + ']' + '(' + prescInside[n].join(', ') + ')';
                             } else {
                               resultString = resultString + ' 合 ' + presc[n] + '[미상]' + '(' + prescInside[n].join(', ') + ')';
                             }
