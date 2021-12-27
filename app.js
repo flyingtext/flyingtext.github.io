@@ -306,9 +306,9 @@ function app() {
           let duplicateToleranceNumber = document.getElementById('duplicate-tolerance-number').value;
           
           if(!document.getElementById("convert-herb-part").checked) {
-            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}")) OR (수치전약재명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as basicCount, group_concat(CASE WHEN LENGTH(TRIM(수치전약재명))=0 THEN 약재한자명 ELSE 수치전약재명 END) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
+            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}")) OR (수치전약재명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(CASE WHEN LENGTH(TRIM(수치전약재명))=0 THEN 약재한자명 ELSE 수치전약재명 END) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
           } else {
-            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출처, 페이지, COUNT(*) as basicCount, group_concat(약재한자명) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
+            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(약재한자명) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
           }
           let _prescp = [];
           while(stmt.step()) {
@@ -413,11 +413,15 @@ function app() {
                       <ul>
                         {resultObj[item.toString()].map((item) => {
                           const presc = item.prescConst.map((item) => item['처방한자명']);
+                          const prescFrom = item.prescConst.map((item) => item['출전'].toString());
+                          const prescFromBook = item.prescConst.map((item) => item['출처'].toString());
+                          const prescPage = item.prescConst.map((item) => item['페이지'].toString());
+                          
                           const prescInside = item.prescConst.map((item) => item['herbConst']);
-                          let resultString = `${presc[0]}(${prescInside[0].join(', ')})`;
+                          let resultString = `${presc[0]}` + '[' + prescFrom[0] + ', ' + prescFromBook[0] + ', ' + prescPage[0] + 'p]' + `(${prescInside[0].join(', ')})`;
                           
                           for(let n=1;n<presc.length;n++) {
-                            resultString = resultString + ' 合 ' + presc[n] + '(' + prescInside[n].join(', ') + ')';
+                            resultString = resultString + ' 合 ' + presc[n] + '[' + prescFrom[n] + ', ' + prescFromBook[n] + ', ' + prescPage[n] + 'p]' + '(' + prescInside[n].join(', ') + ')';
                           }
                           return <li><b>{resultString}</b><span className="add-remove-count">&nbsp;中 加味 {item.leftOver.length.toString()}&nbsp;減味 {item.overAdded.length.toString()}</span>
                             <ul>
