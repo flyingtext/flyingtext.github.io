@@ -420,16 +420,17 @@ function app() {
                           const prescInside = item.prescConst.map((item) => item['herbConst']);
                           let resultString = '';
                           if(prescFrom[0] != '') {
-                            resultString = `${presc[0]}` + '[' + prescFrom[0] + '/' + prescFromBook[0] + '/' + prescPage[0] + 'p]' + `(${prescInside[0].join(', ')})`;
+                            // resultString = `${presc[0]}` + '[' + prescFrom[0] + '/' + prescFromBook[0] + '/' + prescPage[0] + 'p]' + `(${prescInside[0].join(', ')})`;
+                            resultString = `${presc[0]}` + '[' + prescFrom[0] + ']' + `(${prescInside[0].join(', ')})`;
                           } else {
-                            resultString = `${presc[0]}` + '[' + prescFromBook[0] + '/' + prescPage[0] + 'p]' + `(${prescInside[0].join(', ')})`;
+                            resultString = `${presc[0]}` + '[미상]' + `(${prescInside[0].join(', ')})`;
                           }
                           
                           for(let n=1;n<presc.length;n++) {
                             if(prescFrom[n] != '') {
-                              resultString = resultString + ' 合 ' + presc[n] + '[' + prescFrom[n] + '/' + prescFromBook[n] + '/' + prescPage[n] + 'p]' + '(' + prescInside[n].join(', ') + ')';
+                              resultString = resultString + ' 合 ' + presc[n] + '[' + prescFrom[n] + 'p]' + '(' + prescInside[n].join(', ') + ')';
                             } else {
-                              resultString = resultString + ' 合 ' + presc[n] + '[' + prescFromBook[n] + '/' + prescPage[n] + 'p]' + '(' + prescInside[n].join(', ') + ')';
+                              resultString = resultString + ' 合 ' + presc[n] + '[미상]' + '(' + prescInside[n].join(', ') + ')';
                             }
 
                           }
