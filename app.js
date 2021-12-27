@@ -278,7 +278,7 @@ function app() {
           // Process #1
           let processedHerbs = [];
           if(!document.getElementById("convert-herb-part").checked) {
-            const stmt = db.prepare(`SELECT DISTINCT 약재한자명, 약재한글명, 수치전약재명 FROM prescp WHERE (약재한자명 IN ("${selectedHerbs.join('", "')}")) AND 약재한자명 != '' AND (수치전약재명 IS NOT NULL) AND (LENGTH(수치전약재명) != 0);`);
+            const stmt = db.prepare(`SELECT DISTINCT 약재한자명, 약재한글명, 수치전약재명, 순수약재한자명 FROM prescp WHERE (순수약재한자명 IN ("${selectedHerbs.join('", "')}")) AND 순수약재한자명 != '' AND (수치전약재명 IS NOT NULL) AND (LENGTH(수치전약재명) != 0);`);
             let _herbs = {};
             while(stmt.step()) {
               const row = stmt.getAsObject();
@@ -318,7 +318,7 @@ function app() {
             row['herbConst'] = row['herbConst'].split(',');
             _prescp.push(row);
           }
-          
+          console.log(_prescp);
           
           let minLeftOver = 9999999999;
           let minOverAdded = 9999999999;
