@@ -418,10 +418,20 @@ function app() {
                           const prescPage = item.prescConst.map((item) => item['페이지'].toString());
                           
                           const prescInside = item.prescConst.map((item) => item['herbConst']);
-                          let resultString = `${presc[0]}` + '[' + prescFrom[0] + ', ' + prescFromBook[0] + ', ' + prescPage[0] + 'p]' + `(${prescInside[0].join(', ')})`;
+                          let resultString = '';
+                          if(prescFrom[0] != '') {
+                            resultString = `${presc[0]}` + '[' + prescFrom[0] + '/' + prescFromBook[0] + '/' + prescPage[0] + 'p]' + `(${prescInside[0].join(', ')})`;
+                          } else {
+                            resultString = `${presc[0]}` + '[' + prescFromBook[0] + '/' + prescPage[0] + 'p]' + `(${prescInside[0].join(', ')})`;
+                          }
                           
                           for(let n=1;n<presc.length;n++) {
-                            resultString = resultString + ' 合 ' + presc[n] + '[' + prescFrom[n] + ', ' + prescFromBook[n] + ', ' + prescPage[n] + 'p]' + '(' + prescInside[n].join(', ') + ')';
+                            if(prescFrom[n] != '') {
+                              resultString = resultString + ' 合 ' + presc[n] + '[' + prescFrom[n] + '/' + prescFromBook[n] + '/' + prescPage[n] + 'p]' + '(' + prescInside[n].join(', ') + ')';
+                            } else {
+                              resultString = resultString + ' 合 ' + presc[n] + '[' + prescFromBook[n] + '/' + prescPage[n] + 'p]' + '(' + prescInside[n].join(', ') + ')';
+                            }
+
                           }
                           return <li><b>{resultString}</b><span className="add-remove-count">&nbsp;中 加味 {item.leftOver.length.toString()}&nbsp;減味 {item.overAdded.length.toString()}</span>
                             <ul>
