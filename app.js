@@ -314,7 +314,7 @@ function app() {
           while(stmt.step()) {
             const row = stmt.getAsObject();
             if(row['herbCount'] == processedHerbs.length) continue;
-            if(row['herbCount'] / row['basicCount'] < 0.5) continue;
+            if(row['herbCount'] / row['basicCount'] <= 0.5) continue;
             row['herbConst'] = row['herbConst'].split(',');
             _prescp.push(row);
           }
