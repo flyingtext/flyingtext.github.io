@@ -44,28 +44,25 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
       const newCount = newTotalSum.length - totalSum.length;
       const dupCount = leftList[i]['herbConst'].length - newCount;
       
-      console.log('check', leftList[i]['처방한자명'], totalSum, newTotalSum, dupCount);
-      
       if(dupTolerance < dupCount) {
         continue;
       }
       
-      console.log('check', leftList[i]['처방한자명'], totalSum, newTotalSum, dupCount);
       
       const newPrescConst = [...prescConst, leftList[i]];
       
       const result = recursiveDepth(leftDepth - 1, leftList.slice(i + 1), newPrescConst, originalConst, dupTolerance);
-      console.log('result', result, totalResult);
+      
       if(checkOnlyAddHerb()) {
         if((result.leftOver < totalResult.minLeftOver) && (result.overAdded == 0)) {
           totalResult.minLeftOver = result.leftOver;
           totalResult.minOverAdded = result.overAdded;
           totalResult.minPrescConst = [result.prescConst];
           totalResult.minTotalSum = result.totalSum;
-          console.log('new passed');
+          
         } else if ((result.leftOver == totalResult.minLeftOver) && (result.overAdded == 0)) {
           totalResult.minPrescConst.push(result.prescConst);
-          console.log('passed');
+          
         }
       } else {
         if((result.leftOver + result.overAdded) < (totalResult.minLeftOver + totalResult.minOverAdded)) {
@@ -94,7 +91,7 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
       
       const newCount = newTotalSum.length - totalSum.length;
       const dupCount = leftList[i]['herbConst'].length - newCount;
-      // console.log('check', totalSum, newTotalSum, dupCount);
+      
       if(dupTolerance < dupCount) {
         continue;
       }
@@ -149,7 +146,7 @@ function app() {
       const row = stmt.getAsObject();
       _herbs[row['약재한자명'].replace(/\((.*)\)/g, '')] = row['약재한글명'].replace(/\((.*)\)/g, '');
     }
-    console.log(herbs);
+    
     setHerbs(_herbs);
   }
   
@@ -160,7 +157,7 @@ function app() {
       const row = stmt.getAsObject();
       _prescriptions[row['처방한자명'].replace(/\((.*)\)/g, '') + ((row['출전']) ? ('[' +  row['출전'] + ']') : '') + ' / ' + row['처방한글명'].replace(/\((.*)\)/g, '') + ' / ' + row['출처'] + ' / ' + row['페이지'].toString() + 'p'] = row['처방한자명'].replace(/\((.*)\)/g, '') + '/' + row['처방한글명'].replace(/\((.*)\)/g, '') + '/' + row['출처'] + '/' + row['페이지'].toString();
     }
-    console.log(_prescriptions);
+    
     setPrescriptions(_prescriptions);
   }
   
@@ -199,11 +196,12 @@ function app() {
               let _herbs = [];
               while(stmt.step()) {
                 const row = stmt.getAsObject();
+                
                 _herbs.push(row['약재한자명'].replace(/\((.*)\)/g, ''))
               }
               
               let newHerbs = [...new Set([..._herbs, ...selectedHerbs])];
-              console.log(_herbs, selectedHerbs, newHerbs);
+              
               setSelectedHerbs(newHerbs);
             }}>선택 처방 추가</button>
           </div>
@@ -316,11 +314,11 @@ function app() {
           while(stmt.step()) {
             const row = stmt.getAsObject();
             if(row['herbCount'] == processedHerbs.length) continue;
-            if(row['herbCount'] / row['basicCount'] <= 0.5) continue;
+            if(row['herbCount'] / row['basicCount'] < 0.5) continue;
             row['herbConst'] = row['herbConst'].split(',');
             _prescp.push(row);
           }
-          console.log(_prescp);
+          
           
           let minLeftOver = 9999999999;
           let minOverAdded = 9999999999;
@@ -341,7 +339,7 @@ function app() {
             if((!result.prescConst) || (result.prescConst.length == 0)) {
               continue;
             }
-            console.log(i, result);
+            
             /*
             if(checkOnlyAddHerb()) {
               if((result.leftOver < minLeftOver) && (result.overAdded == 0)) {
@@ -393,7 +391,7 @@ function app() {
           setResultObj(computated);
           // setBestResult(wellTarget);
           
-          console.log(computated);
+          
 
         }}>가감 조합 검색</button>
         <div>
