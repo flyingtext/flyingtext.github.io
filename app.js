@@ -10,7 +10,7 @@ function checkOnlyAddHerb() {
 let totalResult = {
   minLeftOver: 9999999999,
   minOverAdded: 9999999999,
-  minPrescConst: [],
+  minPrescConst: {},
   minTotalSum: []
 };
 
@@ -52,26 +52,49 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
       const newPrescConst = [...prescConst, leftList[i]];
       
       const result = recursiveDepth(leftDepth - 1, leftList.slice(i + 1), newPrescConst, originalConst, dupTolerance);
+      const additionToOptimizationNumber = document.getElementById('addition-to-optimization-number').value;
       
       if(checkOnlyAddHerb()) {
         if((result.leftOver < totalResult.minLeftOver) && (result.overAdded == 0)) {
+          
+          for(let j=0;j<=originalConst.length;j++) {
+            if(j == result.leftOver) {
+              // add
+              totalResult.minPrescConst[j.toString()].push(result.prescConst);
+            } else if (j - result.leftOver > additionToOptimizationNumber) {
+              // remove
+              // totalResult.minPrescConst[j.toString()] = [];
+            }
+          }
+          
           totalResult.minLeftOver = result.leftOver;
           totalResult.minOverAdded = result.overAdded;
-          totalResult.minPrescConst = [result.prescConst];
+          // totalResult.minPrescConst = [result.prescConst];
           totalResult.minTotalSum = result.totalSum;
-          
-        } else if ((result.leftOver == totalResult.minLeftOver) && (result.overAdded == 0)) {
-          totalResult.minPrescConst.push(result.prescConst);
-          
+        } else if (((result.leftOver - totalResult.minLeftOver) <= additionToOptimizationNumber) && (result.overAdded == 0)) {
+          // totalResult.minPrescConst.push(result.prescConst);
+          totalResult.minPrescConst[result.leftOver.toString()].push(result.prescConst);
         }
       } else {
         if((result.leftOver + result.overAdded) < (totalResult.minLeftOver + totalResult.minOverAdded)) {
+          
+          for(let j=0;j<=originalConst.length;j++) {
+            if(j == (result.leftOver + result.overAdded)) {
+              // add
+              totalResult.minPrescConst[j.toString()].push(result.prescConst);
+            } else if (j - (result.leftOver + result.overAdded) > additionToOptimizationNumber) {
+              // remove
+              //totalResult.minPrescConst[j.toString()] = [];
+            }
+          }
+          
           totalResult.minLeftOver = result.leftOver;
           totalResult.minOverAdded = result.overAdded;
-          totalResult.minPrescConst = [result.prescConst];
+          // totalResult.minPrescConst = [result.prescConst];
           totalResult.minTotalSum = result.totalSum;
-        } else if ((result.leftOver + result.overAdded) == (totalResult.minLeftOver + totalResult.minOverAdded)) {
-          totalResult.minPrescConst.push(result.prescConst);
+        } else if (((result.leftOver + result.overAdded) - (totalResult.minLeftOver + totalResult.minOverAdded)) <= additionToOptimizationNumber) {
+          // totalResult.minPrescConst.push(result.prescConst);
+          totalResult.minPrescConst[(result.leftOver + result.overAdded).toString()].push(result.prescConst);
         }
       }
     }
@@ -190,7 +213,7 @@ function app() {
               const prescpHangul = prescp.split('/')[1];
               const prescpFrom = prescp.split('/')[2];
               const prescpPage = prescp.split('/')[3];
-              console.log(prescp.split('/')[3]);
+              // console.log(prescp.split('/')[3]);
               let stmt;
               if(prescp.split('/')[3] == '(미기재)') {
                 stmt = db.prepare(`SELECT DISTINCT 약재한자명 FROM prescp WHERE 처방한자명 = '${prescpHanja}' AND 처방한글명='${prescpHangul}' AND 출처='${prescpFrom}' AND 약재한자명 != '' AND 약재한자명 IS NOT NULL AND 약재타입 != 'F';`);
@@ -276,8 +299,9 @@ function app() {
         <label id="least-match-herb-number-label" htmlFor={"least-match-herb-number"}>기본방 최소 일치 본초 수 :&nbsp;<input type="number" id="least-match-herb-number" defaultValue="3" min="1" /></label>
         <label id="max-basic-herb-number-label" htmlFor={"max-basic-herb-number"}>기본방 최대 본초 수 :&nbsp;<input type="number" id="max-basic-herb-number" defaultValue="10" min="1" /></label>
         <label id="max-basic-prescription-number-label" htmlFor={"max-basic-prescription-number"}>최대 기본방 갯수 :&nbsp;<input type="number" id="max-basic-prescription-number" defaultValue="2" min="1" /></label>
-        
         <label id="duplicate-tolerance-number-label" htmlFor={"duplicate-tolerance-number"}>기본방 간 중복 허용 갯수 :&nbsp;<input type="number" id="duplicate-tolerance-number" defaultValue="1" min="0" /></label>
+        
+        <label id="addition-to-optimization-number-label" htmlFor={"addition-to-optimization-number"}>최적 가미 대비 추가 여유 :&nbsp;<input type="number" id="addition-to-optimization-number" defaultValue="1" min="0" /></label>
         
         <button className="form-control btn inline-block btn-primary" onClick={(e) => {
           // Process #1
@@ -310,6 +334,7 @@ function app() {
           let maxBasicPrescNumber = document.getElementById('max-basic-prescription-number').value;
           let duplicateToleranceNumber = document.getElementById('duplicate-tolerance-number').value;
           
+          
           if(!document.getElementById("convert-herb-part").checked) {
             stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}")) OR (수치전약재명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(CASE WHEN LENGTH(TRIM(수치전약재명))=0 THEN 약재한자명 ELSE 수치전약재명 END) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
           } else {
@@ -325,74 +350,53 @@ function app() {
           }
           console.log(_prescp);
           
-          let minLeftOver = 9999999999;
-          let minOverAdded = 9999999999;
-          let minPrescConst = [];
-          let minTotalSum = [];
+          let minPrescConst = {};
           let computated = {};
           let wellTarget = null;
+          
+          for(let i=0;i<=processedHerbs.length;i++) {
+            minPrescConst[i.toString()] = [];
+          }
 
           for(let i=1;i<=maxBasicPrescNumber;i++) {
             totalResult = {
               minLeftOver: 9999999999,
               minOverAdded: 9999999999,
-              minPrescConst: [],
+              minPrescConst: JSON.parse(JSON.stringify(minPrescConst)),
               minTotalSum: []
             };
             const result = recursiveDepth(i, _prescp, [], processedHerbs, duplicateToleranceNumber);
+            
             computated[i.toString()] = [];
             if((!result.prescConst) || (result.prescConst.length == 0)) {
               continue;
             }
-            
-            /*
-            if(checkOnlyAddHerb()) {
-              if((result.leftOver < minLeftOver) && (result.overAdded == 0)) {
-                minLeftOver = result.leftOver;
-                minOverAdded = result.overAdded;
-                minPrescConst = result.prescConst;
-                minTotalSum = result.totalSum;
-                wellTarget = i.toString();
+            // console.log(i, totalResult);
+            for(let j=0;j<Object.keys(totalResult.minPrescConst).length;j++) {
+              for(let k=0;k<totalResult.minPrescConst[j.toString()].length;k++) {
+                let result = {
+                  prescConst: totalResult.minPrescConst[j.toString()][k]
+                };
+                
+                let leftOver = JSON.parse(JSON.stringify(processedHerbs));
+                let totalSum = []
+                for(let k=0;k<result.prescConst.length;k++) {
+                  leftOver = leftOver.filter(n => !(result.prescConst[k]['herbConst'].includes(n)));
+                  totalSum = [...totalSum, ...result.prescConst[k]['herbConst']];
+                }
+                totalSum = [...new Set(totalSum)];
+                let overAdded = totalSum.filter(n => !(processedHerbs.includes(n)));
+                
+                result.overAdded = overAdded;
+                result.leftOver = leftOver;
+                computated[i.toString()].push(result);
               }
-            } else {
-              if((result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
-                minLeftOver = result.leftOver;
-                minOverAdded = result.overAdded;
-                minPrescConst = result.prescConst;
-                minTotalSum = result.totalSum;
-                wellTarget = i.toString();
-              }
-            }
-            */
-            /*if((result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
-              minLeftOver = result.leftOver;
-              minOverAdded = result.overAdded;
-              minPrescConst = result.prescConst;
-              minTotalSum = result.totalSum;
-              wellTarget = i.toString();
-            }*/
-            for(let j=0;j<totalResult.minPrescConst.length;j++) {
               
-              let result = {
-                prescConst: totalResult.minPrescConst[j]
-              };
               
-              let leftOver = JSON.parse(JSON.stringify(processedHerbs));
-              let totalSum = []
-              for(let k=0;k<result.prescConst.length;k++) {
-                leftOver = leftOver.filter(n => !(result.prescConst[k]['herbConst'].includes(n)));
-                totalSum = [...totalSum, ...result.prescConst[k]['herbConst']];
-              }
-              totalSum = [...new Set(totalSum)];
-              let overAdded = totalSum.filter(n => !(processedHerbs.includes(n)));
-              
-              result.overAdded = overAdded;
-              result.leftOver = leftOver;
-              computated[i.toString()].push(result);
             }
             
           }
-          
+          console.log(computated);
           setResultObj(computated);
           // setBestResult(wellTarget);
           

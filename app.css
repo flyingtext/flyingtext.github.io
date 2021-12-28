@@ -83,6 +83,14 @@
 #duplicate-tolerance-number {
   width: 50px;
 }
+
+#addition-to-optimization-number-label {
+  display: block;
+}
+#addition-to-optimization-number {
+  width: 50px;
+}
+
 body {
   margin : 10px;
 }
