@@ -63,7 +63,7 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
               totalResult.minPrescConst[j.toString()].push(result.prescConst);
             } else if (j - result.leftOver > additionToOptimizationNumber) {
               // remove
-              // totalResult.minPrescConst[j.toString()] = [];
+              totalResult.minPrescConst[j.toString()] = [];
             }
           }
           
@@ -84,7 +84,7 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
               totalResult.minPrescConst[j.toString()].push(result.prescConst);
             } else if (j - (result.leftOver + result.overAdded) > additionToOptimizationNumber) {
               // remove
-              //totalResult.minPrescConst[j.toString()] = [];
+              totalResult.minPrescConst[j.toString()] = [];
             }
           }
           
