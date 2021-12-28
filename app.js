@@ -329,16 +329,16 @@ function app() {
           // Process #1-2
           
           let stmt;
-          
+          /*
           stmt = db.prepare(`SELECT 처방한자명, COUNT(*) as fullPrescCount FROM prescp WHERE (순수약재한자명 IN ("${selectedHerbs.join('", "')}")) AND 순수약재한자명 != '' AND (수치전약재명 IS NOT NULL) AND (LENGTH(수치전약재명) != 0) GROUP BY 처방한자명;`);
           let identifiedPresc = [];
           while(stmt.step()) {
             const row = stmt.getAsObject();
             if(row['fullPrescCount'] == processedHerbs.length) {
-              identifiedPresc.push(row['처방한글명']);
+              identifiedPresc.push(row['처방한자명']);
             }
           }
-          
+          */
           // Process #2
           
           let leastMatchHerbNumber = document.getElementById('least-match-herb-number').value;
@@ -357,7 +357,7 @@ function app() {
             const row = stmt.getAsObject();
             if(row['herbCount'] == processedHerbs.length) continue;
             if(row['herbCount'] / row['basicCount'] <= 0.5) continue;
-            if(identifiedPresc.indexOf(row['처방한글명']) != -1) continue;
+            // if(identifiedPresc.indexOf(row['처방한자명']) != -1) continue;
             row['herbConst'] = row['herbConst'].split(',');
             _prescp.push(row);
           }
