@@ -335,7 +335,7 @@ function app() {
           while(stmt.step()) {
             const row = stmt.getAsObject();
             if(row['fullPrescCount'] == processedHerbs.length) {
-              identifiedPresc.push(row['처방한자명']);
+              identifiedPresc.push(row['처방한글명']);
             }
           }
           
@@ -357,7 +357,7 @@ function app() {
             const row = stmt.getAsObject();
             if(row['herbCount'] == processedHerbs.length) continue;
             if(row['herbCount'] / row['basicCount'] <= 0.5) continue;
-            if(identifiedPresc.indexOf(row['처방한자명']) != -1) continue;
+            if(identifiedPresc.indexOf(row['처방한글명']) != -1) continue;
             row['herbConst'] = row['herbConst'].split(',');
             _prescp.push(row);
           }
