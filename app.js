@@ -271,7 +271,7 @@ function app() {
           <select id="analysis-target-list" name="analysis-target-list" size={35} multiple="multiple">  
           {
             selectedHerbs.map((item, i) => {
-              return <option value={item}>{item + '(' + herbs[item] + ')'}</option>
+              return <option value={item}>{item}</option>
             })
           }
           </select>
