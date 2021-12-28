@@ -304,7 +304,7 @@ function app() {
         <label id="addition-to-optimization-number-label" htmlFor={"addition-to-optimization-number"}>최적 가미 대비 추가 여유 :&nbsp;<input type="number" id="addition-to-optimization-number" defaultValue="1" min="0" /></label>
         
         <button className="form-control btn inline-block btn-primary" onClick={(e) => {
-          // Process #1
+          // Process #1-1
           let processedHerbs = [];
           if(!document.getElementById("convert-herb-part").checked) {
             const stmt = db.prepare(`SELECT DISTINCT 약재한자명, 약재한글명, 수치전약재명, 순수약재한자명 FROM prescp WHERE (순수약재한자명 IN ("${selectedHerbs.join('", "')}")) AND 순수약재한자명 != '' AND (수치전약재명 IS NOT NULL) AND (LENGTH(수치전약재명) != 0);`);
@@ -326,8 +326,20 @@ function app() {
 
           setTargetHerbText('- 조합 대상 선정 : ' + processedHerbs.join(', '));
           
-          // Process #2
+          // Process #1-2
+          
           let stmt;
+          
+          stmt = db.prepare(`SELECT 처방한자명, COUNT(*) as fullPrescCount FROM prescp WHERE (순수약재한자명 IN ("${selectedHerbs.join('", "')}")) AND 순수약재한자명 != '' AND (수치전약재명 IS NOT NULL) AND (LENGTH(수치전약재명) != 0) GROUP BY 처방한자명;`);
+          let identifiedPresc = [];
+          while(stmt.step()) {
+            const row = stmt.getAsObject();
+            if(row['fullPrescCount'] == processedHerbs.length) {
+              identifiedPresc.push(row['처방한자명']);
+            }
+          }
+          
+          // Process #2
           
           let leastMatchHerbNumber = document.getElementById('least-match-herb-number').value;
           let maxBasicHerbNumber = document.getElementById('max-basic-herb-number').value;
@@ -336,15 +348,16 @@ function app() {
           
           
           if(!document.getElementById("convert-herb-part").checked) {
-            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}")) OR (수치전약재명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(CASE WHEN LENGTH(TRIM(수치전약재명))=0 THEN 약재한자명 ELSE 수치전약재명 END) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
+            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}")) OR (수치전약재명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(CASE WHEN LENGTH(TRIM(수치전약재명))=0 THEN 약재한자명 ELSE 수치전약재명 END) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지, 수치전약재명) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
           } else {
-            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(약재한자명) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
+            stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE ((약재한자명 IN ("${processedHerbs.join('", "')}"))) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(약재한자명) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지, 수치전약재명) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
           }
           let _prescp = [];
           while(stmt.step()) {
             const row = stmt.getAsObject();
             if(row['herbCount'] == processedHerbs.length) continue;
             if(row['herbCount'] / row['basicCount'] <= 0.5) continue;
+            if(identifiedPresc.indexOf(row['처방한자명']) != -1) continue;
             row['herbConst'] = row['herbConst'].split(',');
             _prescp.push(row);
           }
@@ -354,7 +367,7 @@ function app() {
           let computated = {};
           let wellTarget = null;
           
-          for(let i=0;i<=processedHerbs.length;i++) {
+          for(let i=0;i<=processedHerbs.length * 2;i++) {
             minPrescConst[i.toString()] = [];
           }
 
