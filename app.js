@@ -311,11 +311,11 @@ function app() {
           // Process #1-1
           let processedHerbs = [];
           if(!document.getElementById("convert-herb-part").checked) {
-            const stmt = db.prepare(`SELECT DISTINCT 약재한글명, 수치전약재명, 순수약재한자명 FROM prescp WHERE (순수약재한자명 IN ("${selectedHerbs.join('", "')}")) AND 순수약재한자명 != '' AND (수치전약재명 IS NOT NULL) AND (LENGTH(수치전약재명) != 0);`);
+            const stmt = db.prepare(`SELECT DISTINCT 약재한자명, 약재한글명, 수치전약재명, 순수약재한자명 FROM prescp WHERE (약재한자명 IN ("${selectedHerbs.join('", "')}")) AND 순수약재한자명 != '' AND (수치전약재명 IS NOT NULL) AND (LENGTH(수치전약재명) != 0);`);
             let _herbs = {};
             while(stmt.step()) {
               const row = stmt.getAsObject();
-              _herbs[row['순수약재한자명'].replace(/\((.*)\)/g, '')] = row['수치전약재명'];
+              _herbs[row['약재한자명'].replace(/\((.*)\)/g, '')] = row['순수약재한자명'];
             }
             for(let i=0;i<selectedHerbs.length;i++) {
               if(Object.keys(_herbs).indexOf(selectedHerbs[i]) != -1) {
