@@ -178,7 +178,7 @@ function app() {
     let _prescriptions = {};
     while(stmt.step()) {
       const row = stmt.getAsObject();
-      _prescriptions[row['처방한자명'].replace(/\((.*)\)/g, '') + ((row['출전']) ? ('[' +  row['출전'] + ']') : '') + ' / ' + row['처방한글명'].replace(/\((.*)\)/g, '') + ' / ' + row['출처'] + ' / ' + row['페이지'].toString() + 'p'] = row['처방한자명'].replace(/\((.*)\)/g, '') + '/' + row['처방한글명'].replace(/\((.*)\)/g, '') + '/' + row['출처'] + '/' + row['페이지'].toString();
+      _prescriptions[row['처방한자명'].replace(/\((.*)\)/g, '') + ((row['출전']) ? ('[' +  row['출전'] + ']') : '') + ' / ' + row['처방한글명'].replace(/\((.*)\)/g, '') + ' / ' + row['출처'] + ' / ' + row['페이지'].toString() + 'p'] = row['처방한자명'].replace(/\((.*)\)/g, '') + '/' + row['처방한글명'].replace(/\((.*)\)/g, '') + '/' + row['출전'] + '/' + row['출처'] + '/' + row['페이지'].toString();
     }
     
     setPrescriptions(_prescriptions);
@@ -211,14 +211,15 @@ function app() {
               const prescp = selArray[0].value;
               const prescpHanja = prescp.split('/')[0];
               const prescpHangul = prescp.split('/')[1];
-              const prescpFrom = prescp.split('/')[2];
-              const prescpPage = prescp.split('/')[3];
-              // console.log(prescp.split('/')[3]);
+              const prescpOriginalFrom = prescp.split('/')[2];
+              const prescpFrom = prescp.split('/')[3];
+              const prescpPage = prescp.split('/')[4];
+              console.log(prescp.split('/'));
               let stmt;
-              if(prescp.split('/')[3] == '(미기재)') {
-                stmt = db.prepare(`SELECT DISTINCT 약재한자명 FROM prescp WHERE 처방한자명 = '${prescpHanja}' AND 처방한글명='${prescpHangul}' AND 출처='${prescpFrom}' AND 약재한자명 != '' AND 약재한자명 IS NOT NULL AND 약재타입 != 'F';`);
+              if(prescp.split('/')[4] == '(미기재)') {
+                stmt = db.prepare(`SELECT DISTINCT 약재한자명 FROM prescp WHERE 처방한자명 = '${prescpHanja}' AND 처방한글명='${prescpHangul}' AND 출전='${prescpOriginalFrom}' AND 출처='${prescpFrom}' AND 약재한자명 != '' AND 약재한자명 IS NOT NULL AND 약재타입 != 'F';`);
               } else {
-                stmt = db.prepare(`SELECT DISTINCT 약재한자명 FROM prescp WHERE 처방한자명 = '${prescpHanja}' AND 처방한글명='${prescpHangul}' AND 출처='${prescpFrom}' AND 페이지='${prescpPage}' AND 약재한자명 != '' AND 약재한자명 IS NOT NULL AND 약재타입 != 'F';`);
+                stmt = db.prepare(`SELECT DISTINCT 약재한자명 FROM prescp WHERE 처방한자명 = '${prescpHanja}' AND 처방한글명='${prescpHangul}' AND 출전='${prescpOriginalFrom}' AND 출처='${prescpFrom}' AND 페이지='${prescpPage}' AND 약재한자명 != '' AND 약재한자명 IS NOT NULL AND 약재타입 != 'F';`);
               }
               
               let _herbs = [];
