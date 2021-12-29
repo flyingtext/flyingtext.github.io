@@ -300,12 +300,15 @@ function app() {
       
         <label id="only-add-herb-label" htmlFor={"only-add-herb"}><input type="checkbox" id="only-add-herb" defaultChecked={false} onChange={(e)=>{}}/>減味 배제(加味만 고려)</label>
         <label id="convert-herb-part-label" htmlFor={"convert-herb-part"}><input type="checkbox" id="convert-herb-part" />동일 약재 시 포제 구분 (체크 안 함 권장)</label>
+        <label id="no-add-name-label" htmlFor={"no-add-name"}><input type="checkbox" id="no-add-name" defaultChecked={true} />기본방에서 이름에 "가미" 혹은 "가감"이 들어간 처방은 제외</label>
         <label id="least-match-herb-number-label" htmlFor={"least-match-herb-number"}>기본방 최소 일치 본초 수 :&nbsp;<input type="number" id="least-match-herb-number" defaultValue="3" min="1" /></label>
         <label id="max-basic-herb-number-label" htmlFor={"max-basic-herb-number"}>기본방 최대 본초 수 :&nbsp;<input type="number" id="max-basic-herb-number" defaultValue="10" min="1" /></label>
         <label id="max-basic-prescription-number-label" htmlFor={"max-basic-prescription-number"}>최대 기본방 갯수 :&nbsp;<input type="number" id="max-basic-prescription-number" defaultValue="2" min="1" /></label>
         <label id="duplicate-tolerance-number-label" htmlFor={"duplicate-tolerance-number"}>기본방 간 중복 허용 갯수 :&nbsp;<input type="number" id="duplicate-tolerance-number" defaultValue="1" min="0" /></label>
         
         <label id="addition-to-optimization-number-label" htmlFor={"addition-to-optimization-number"}>최적 가미 대비 추가 여유 :&nbsp;<input type="number" id="addition-to-optimization-number" defaultValue="1" min="0" /></label>
+        
+        
         
         <button className="form-control btn inline-block btn-primary" onClick={(e) => {
           // Process #1-1
@@ -350,7 +353,7 @@ function app() {
           let maxBasicHerbNumber = document.getElementById('max-basic-herb-number').value;
           let maxBasicPrescNumber = document.getElementById('max-basic-prescription-number').value;
           let duplicateToleranceNumber = document.getElementById('duplicate-tolerance-number').value;
-          
+          let noAddNameCheck = document.getElementById('no-add-name').checked;
           
           if(!document.getElementById("convert-herb-part").checked) {
             stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE (순수약재한자명 IN ("${processedHerbs.join('", "')}")) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(순수약재한자명) as herbConst FROM prescp WHERE 순수약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
@@ -360,6 +363,10 @@ function app() {
           let _prescp = [];
           while(stmt.step()) {
             const row = stmt.getAsObject();
+            if(noAddNameCheck) {
+              if(row['처방한자명'].indexOf('加味') != -1) continue;
+              if(row['처방한자명'].indexOf('加減') != -1) continue;
+            }
             if(row['herbCount'] == processedHerbs.length) continue;
             if(row['herbCount'] / row['basicCount'] <= 0.5) continue;
             // if(identifiedPresc.indexOf(row['처방한자명']) != -1) continue;
