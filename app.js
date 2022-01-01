@@ -7,6 +7,8 @@ function checkOnlyAddHerb() {
   return el.checked;
 }
 
+const COUNT_OFFSET = 100000;
+
 /*let totalResult = {
   minLeftOver: 9999999999,
   minOverAdded: 9999999999,
@@ -15,7 +17,9 @@ function checkOnlyAddHerb() {
 };*/
 let progressCount = 0;
 let totalCount = 0;
+let lastCount = 0;
 let $searchProgressBar = $('#search-progress-bar');
+
 
 function countRecursiveDepth(leftDepth, leftListLength) {
   if(leftDepth > 1) {
@@ -51,10 +55,11 @@ async function recursiveDepth(totalResult, leftDepth, leftList, prescConst, orig
     let minTotalSum = [];*/
     for(let i=0;i<leftList.length;i++) {
       progressCount += 1;
-      if(progressCount % 1000 == 0 ) {
+      if(progressCount - lastCount > COUNT_OFFSET) {
         $searchProgressBar.attr('aria-valuenow', progressCount);
         $searchProgressBar.text(progressCount.toString() + ' / ' + totalCount.toString());
         $searchProgressBar.css('width', (Math.round(progressCount / totalCount * 10000) / 100).toString() + '%');
+        lastCount = progressCount;
         await sleep(0);
       }
       let totalSum = [];
@@ -150,10 +155,11 @@ async function recursiveDepth(totalResult, leftDepth, leftList, prescConst, orig
         let tempAddCount = countRecursiveDepth(leftDepth - 1, leftList.length - i - 1);
         
         progressCount += tempAddCount;
-        if(progressCount % 1000 == 0 ) {
+        if(progressCount - lastCount > COUNT_OFFSET) {
           $searchProgressBar.attr('aria-valuenow', progressCount);
           $searchProgressBar.text(progressCount.toString() + ' / ' + totalCount.toString());
           $searchProgressBar.css('width', (Math.round(progressCount / totalCount * 10000) / 100).toString() + '%');
+          lastCount = progressCount;
           await sleep(0);
         }
         continue;
@@ -440,6 +446,7 @@ function app() {
           
           progressCount = 0;
           totalCount = 0;
+          lastCount = 0;
           let gopArray = [];
           for(let i=1;i<=maxBasicPrescNumber;i++) {
             let tempTotal = countRecursiveDepth(i, _prescp.length);
