@@ -51,7 +51,7 @@ async function recursiveDepth(totalResult, leftDepth, leftList, prescConst, orig
     let minTotalSum = [];*/
     for(let i=0;i<leftList.length;i++) {
       progressCount += 1;
-      if(progressCount % 500 == 0 ) {
+      if(progressCount % 1000 == 0 ) {
         $searchProgressBar.attr('aria-valuenow', progressCount);
         $searchProgressBar.text(progressCount.toString() + ' / ' + totalCount.toString());
         $searchProgressBar.css('width', (Math.round(progressCount / totalCount * 10000) / 100).toString() + '%');
@@ -150,7 +150,7 @@ async function recursiveDepth(totalResult, leftDepth, leftList, prescConst, orig
         let tempAddCount = countRecursiveDepth(leftDepth - 1, leftList.length - i - 1);
         
         progressCount += tempAddCount;
-        if(progressCount % 500 == 0 ) {
+        if(progressCount % 1000 == 0 ) {
           $searchProgressBar.attr('aria-valuenow', progressCount);
           $searchProgressBar.text(progressCount.toString() + ' / ' + totalCount.toString());
           $searchProgressBar.css('width', (Math.round(progressCount / totalCount * 10000) / 100).toString() + '%');
