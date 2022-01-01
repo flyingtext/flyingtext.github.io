@@ -98,3 +98,29 @@ body {
 p {
   margin: 0px !important;
 }
+
+.presc-name {
+  font-weight: 600;
+  font-size: 16pt;
+}
+
+.presc-from {
+  font-size: 8pt;
+  text-overflow: ellipsis;
+  max-width: 100px;
+  overflow: hidden;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.presc-inside {
+  font-size: 14pt;
+}
+
+.add-herb {
+  font-size: 14pt;
+}
+
+.remove-herb {
+  font-size: 14pt;
+}
