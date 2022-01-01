@@ -7,18 +7,34 @@ function checkOnlyAddHerb() {
   return el.checked;
 }
 
-let totalResult = {
+/*let totalResult = {
   minLeftOver: 9999999999,
   minOverAdded: 9999999999,
   minPrescConst: {},
   minTotalSum: []
-};
+};*/
+let progressCount = 0;
+let totalCount = 0;
+let $searchProgressBar = $('#search-progress-bar');
 
-function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupTolerance) {
+function countRecursiveDepth(leftDepth, leftListLength) {
+  if(leftDepth > 1) {
+    let sum = 0;
+    for(let i=1;i<=leftListLength;i++) {
+      sum += countRecursiveDepth(leftDepth-1, leftListLength-i);
+    }
+    return sum;
+  } else {
+    return leftListLength;
+  }
+}
+
+async function recursiveDepth(totalResult, leftDepth, leftList, prescConst, originalConst, dupTolerance) {
   
   if(leftDepth<=0) {
     let leftOver = originalConst;
     let totalSum = []
+    // console.log(leftOver);
     for(let i=0;i<prescConst.length;i++) {
       leftOver = leftOver.filter(n => !(prescConst[i]['herbConst'].includes(n)));
       totalSum = [...totalSum, ...prescConst[i]['herbConst']];
@@ -34,6 +50,13 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
     let minPrescConst = [];
     let minTotalSum = [];*/
     for(let i=0;i<leftList.length;i++) {
+      progressCount += 1;
+      if(progressCount % 500 == 0 ) {
+        $searchProgressBar.attr('aria-valuenow', progressCount);
+        $searchProgressBar.text(progressCount.toString() + ' / ' + totalCount.toString());
+        $searchProgressBar.css('width', (Math.round(progressCount / totalCount * 10000) / 100).toString() + '%');
+        await sleep(0);
+      }
       let totalSum = [];
       for(let j=0;j<prescConst.length;j++) {
         totalSum = [...totalSum, ...prescConst[j]['herbConst']];
@@ -51,7 +74,7 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
       
       const newPrescConst = [...prescConst, leftList[i]];
       
-      const result = recursiveDepth(leftDepth - 1, leftList.slice(i + 1), newPrescConst, originalConst, dupTolerance);
+      const result = await recursiveDepth(totalResult, leftDepth - 1, leftList.slice(i + 1), newPrescConst, originalConst, dupTolerance);
       const additionToOptimizationNumber = document.getElementById('addition-to-optimization-number').value;
       
       if(checkOnlyAddHerb()) {
@@ -71,7 +94,7 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
           totalResult.minOverAdded = result.overAdded;
           // totalResult.minPrescConst = [result.prescConst];
           totalResult.minTotalSum = result.totalSum;
-        } else if (((result.leftOver - totalResult.minLeftOver) <= additionToOptimizationNumber) && (result.overAdded == 0)) {
+        } else if ((result.leftOver != 9999999999) && ((result.leftOver - totalResult.minLeftOver) <= additionToOptimizationNumber) && (result.overAdded == 0)) {
           // totalResult.minPrescConst.push(result.prescConst);
           totalResult.minPrescConst[result.leftOver.toString()].push(result.prescConst);
         }
@@ -92,19 +115,19 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
           totalResult.minOverAdded = result.overAdded;
           // totalResult.minPrescConst = [result.prescConst];
           totalResult.minTotalSum = result.totalSum;
-        } else if (((result.leftOver + result.overAdded) - (totalResult.minLeftOver + totalResult.minOverAdded)) <= additionToOptimizationNumber) {
+        } else if ((result.leftOver != 9999999999) && ((result.leftOver + result.overAdded) - (totalResult.minLeftOver + totalResult.minOverAdded)) <= additionToOptimizationNumber) {
           // totalResult.minPrescConst.push(result.prescConst);
           totalResult.minPrescConst[(result.leftOver + result.overAdded).toString()].push(result.prescConst);
         }
       }
     }
-    return {prescConst: totalResult.minPrescConst, leftOver: totalResult.minLeftOver, totalSum: totalResult.minTotalSum, overAdded: totalResult.minOverAdded};
+    return {totalResult, prescConst: totalResult.minPrescConst, leftOver: totalResult.minLeftOver, totalSum: totalResult.minTotalSum, overAdded: totalResult.minOverAdded};
   } else {
     let minLeftOver = 9999999999;
     let minOverAdded = 9999999999;
     let minPrescConst = [];
     let minTotalSum = [];
-    for(let i=0;i<leftList.length - 1;i++) {
+    for(let i=0;i<leftList.length;i++) {
       let totalSum = [];
       for(let j=0;j<prescConst.length;j++) {
         totalSum = [...totalSum, ...prescConst[j]['herbConst']];
@@ -116,21 +139,38 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
       const dupCount = leftList[i]['herbConst'].length - newCount;
       
       if(dupTolerance < dupCount) {
+        /*
+        let gopArray = [];
+        let tempAddCount = 1;
+        for(let i=(leftList.length - 1).length;i>=(leftList.length - 1 - leftDepth + 1 + 1);i--) {
+          gopArray.push(i);
+        }
+        gopArray.map((item) => { tempAddCount=tempAddCount*item });
+        */
+        let tempAddCount = countRecursiveDepth(leftDepth - 1, leftList.length - i - 1);
+        
+        progressCount += tempAddCount;
+        if(progressCount % 500 == 0 ) {
+          $searchProgressBar.attr('aria-valuenow', progressCount);
+          $searchProgressBar.text(progressCount.toString() + ' / ' + totalCount.toString());
+          $searchProgressBar.css('width', (Math.round(progressCount / totalCount * 10000) / 100).toString() + '%');
+          await sleep(0);
+        }
         continue;
       }
       
       const newPrescConst = [...prescConst, leftList[i]];
       
-      const result = recursiveDepth(leftDepth - 1, leftList.slice(i + 1), newPrescConst, originalConst, dupTolerance);
+      const result = await recursiveDepth(totalResult, leftDepth - 1, leftList.slice(i + 1), newPrescConst, originalConst, dupTolerance);
       if(checkOnlyAddHerb()) {
-        if((result.leftOver < minLeftOver) && (result.overAdded == 0)) {
+        if((result.leftOver != 9999999999) && (result.leftOver < minLeftOver) && (result.overAdded == 0)) {
           minLeftOver = result.leftOver;
           minOverAdded = result.overAdded;
           minPrescConst = result.prescConst;
           minTotalSum = result.totalSum;
         }
       } else {
-        if((result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
+        if((result.leftOver != 9999999999) && (result.leftOver + result.overAdded) < (minLeftOver + minOverAdded)) {
           minLeftOver = result.leftOver;
           minOverAdded = result.overAdded;
           minPrescConst = result.prescConst;
@@ -138,8 +178,12 @@ function recursiveDepth(leftDepth, leftList, prescConst, originalConst, dupToler
         }
       }
     }
-    return {prescConst: minPrescConst, leftOver: minLeftOver, totalSum: minTotalSum, overAdded: minOverAdded};
+    return {totalResult, prescConst: minPrescConst, leftOver: minLeftOver, totalSum: minTotalSum, overAdded: minOverAdded};
   }
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 function app() {
@@ -311,7 +355,8 @@ function app() {
         
         
         
-        <button className="form-control btn inline-block btn-primary" onClick={(e) => {
+        <button className="form-control btn inline-block btn-primary" onClick={async (e) => {
+          
           // Process #1-1
           let processedHerbs = [];
           if(!document.getElementById("convert-herb-part").checked) {
@@ -335,6 +380,12 @@ function app() {
 
           setTargetHerbText('- 조합 대상 선정 : ' + processedHerbs.join(', '));
           
+          let leastMatchHerbNumber = document.getElementById('least-match-herb-number').value;
+          let maxBasicHerbNumber = document.getElementById('max-basic-herb-number').value;
+          let maxBasicPrescNumber = document.getElementById('max-basic-prescription-number').value;
+          let duplicateToleranceNumber = document.getElementById('duplicate-tolerance-number').value;
+          let noAddNameCheck = document.getElementById('no-add-name').checked;
+          
           // Process #1-2
           
           let stmt;
@@ -350,11 +401,7 @@ function app() {
           */
           // Process #2
           
-          let leastMatchHerbNumber = document.getElementById('least-match-herb-number').value;
-          let maxBasicHerbNumber = document.getElementById('max-basic-herb-number').value;
-          let maxBasicPrescNumber = document.getElementById('max-basic-prescription-number').value;
-          let duplicateToleranceNumber = document.getElementById('duplicate-tolerance-number').value;
-          let noAddNameCheck = document.getElementById('no-add-name').checked;
+          
           
           if(!document.getElementById("convert-herb-part").checked) {
             stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE (순수약재한자명 IN ("${processedHerbs.join('", "')}")) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(순수약재한자명) as herbConst FROM prescp WHERE 순수약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst ORDER BY q3.herbCount DESC;`);
@@ -376,6 +423,23 @@ function app() {
           }
           console.log(_prescp);
           
+          // Progressbar setting
+          const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('search-progress-modal'), {backdrop: 'static', keyboard:false});
+          modal.toggle();
+          
+          progressCount = 0;
+          totalCount = 0;
+          let gopArray = [];
+          for(let i=1;i<=maxBasicPrescNumber;i++) {
+            let tempTotal = countRecursiveDepth(i, _prescp.length);
+            // console.log('tempTotal', tempTotal);
+            totalCount += tempTotal;
+          }
+          
+          $searchProgressBar.attr('aria-valuemax', totalCount);
+          $searchProgressBar.text('0 / ' + totalCount.toString());
+          await sleep(0);
+          
           let minPrescConst = {};
           let computated = {};
           let wellTarget = null;
@@ -385,19 +449,20 @@ function app() {
           }
 
           for(let i=1;i<=maxBasicPrescNumber;i++) {
-            totalResult = {
+            let totalResult = {
               minLeftOver: 9999999999,
               minOverAdded: 9999999999,
               minPrescConst: JSON.parse(JSON.stringify(minPrescConst)),
               minTotalSum: []
             };
-            const result = recursiveDepth(i, _prescp, [], processedHerbs, duplicateToleranceNumber);
+            const result = await recursiveDepth(totalResult, i, _prescp, [], processedHerbs, duplicateToleranceNumber);
             
             computated[i.toString()] = [];
             if((!result.prescConst) || (result.prescConst.length == 0)) {
               continue;
             }
             // console.log(i, totalResult);
+            totalResult = result.totalResult;
             for(let j=0;j<Object.keys(totalResult.minPrescConst).length;j++) {
               for(let k=0;k<totalResult.minPrescConst[j.toString()].length;k++) {
                 let result = {
@@ -423,6 +488,7 @@ function app() {
             
           }
           console.log(computated);
+          modal.toggle();
           setResultObj(computated);
           // setBestResult(wellTarget);
           
@@ -440,13 +506,13 @@ function app() {
             <ol>
               {
                 (Object.keys(resultObj).length != 0) && Array.from({length: document.getElementById('max-basic-prescription-number').value}, (_, i) => i + 1).map((item) => {
-                  if(resultObj[item.toString()].length == 0) {
+                  if(resultObj[item.toString()] && resultObj[item.toString()].length == 0) {
                     return <li>기본방 {item.toString()}개 기반 해당 조건 하 검색된 가감 없음</li>
                   }
                   return (
                     <li>
                       <ul>
-                        {resultObj[item.toString()].map((item) => {
+                        {resultObj[item.toString()] && resultObj[item.toString()].map((item) => {
                           const presc = item.prescConst.map((item) => item['처방한자명']);
                           const prescFrom = item.prescConst.map((item) => item['출전'].toString());
                           const prescFromBook = item.prescConst.map((item) => item['출처'].toString());
