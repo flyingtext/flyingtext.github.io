@@ -349,7 +349,7 @@ function app() {
           modal.toggle();
         }}>검색 옵션 설정 방법 설명 보기</button>
       
-        <label id="only-add-herb-label" htmlFor={"only-add-herb"}><input type="checkbox" id="only-add-herb" defaultChecked={false} onChange={(e)=>{}}/>減味 배제(加味만 고려)</label>
+        <label id="only-add-herb-label" htmlFor={"only-add-herb"}><input type="checkbox" id="only-add-herb" defaultChecked={false} onChange={(e)=>{}}/>去味 배제(加味만 고려)</label>
         <label id="convert-herb-part-label" htmlFor={"convert-herb-part"}><input type="checkbox" id="convert-herb-part" />동일 약재 시 포제 구분 (체크 안 함 권장)</label>
         <label id="no-add-name-label" htmlFor={"no-add-name"}><input type="checkbox" id="no-add-name" defaultChecked={true} />기본방에서 이름에 "가미" 혹은 "가감"이 들어간 처방은 제외</label>
         
@@ -623,11 +623,11 @@ function app() {
                                     </span>
                                   }
                                 })}
-                                  <span className="add-remove-count">&nbsp;中 加味 {item.leftOver.length.toString()}&nbsp;減味 {item.overAdded.length.toString()}</span>
+                                  <span className="add-remove-count">&nbsp;中 加味 {item.leftOver.length.toString()}&nbsp;去味 {item.overAdded.length.toString()}</span>
 
                                     <ul>
                                     {(item.leftOver.length != 0) && <li>加 <span className="add-herb">{item.leftOver.join(', ')}</span></li>}
-                                      {(item.overAdded.length != 0) && <li>減 <span className="remove-herb">{item.overAdded.join(', ')}</span></li>}
+                                      {(item.overAdded.length != 0) && <li>去 <span className="remove-herb">{item.overAdded.join(', ')}</span></li>}
                                     </ul>
 
                             
