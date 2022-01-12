@@ -102,7 +102,7 @@ window.onload = () => {
       const analyzer = Meyda.createMeydaAnalyzer({
         audioContext: audioContent,
         source: audioStream,
-        bufferSize: 4096,
+        bufferSize: 2048,
         featureExtractors: features,
         callback: (features) => {
           cnt = 0;
