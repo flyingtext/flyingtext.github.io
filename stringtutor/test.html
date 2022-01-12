@@ -66,7 +66,7 @@ window.onload = () => {
   
   var soundAllowed = function (stream) {
       window.persistAudioStream = stream;
-      var audioContent = new AudioContext();
+      var audioContent = new AudioContext({latencyHint: 'playback', sampleRate: 16000});
       var audioStream = audioContent.createMediaStreamSource( stream );
       
       var kf = {};
@@ -95,7 +95,7 @@ window.onload = () => {
       });
       
       // chart = new ApexCharts(document.querySelector("#kalman-chart"), newConfig);
-      console.log(opts, lastData);
+      // console.log(opts, lastData);
       chart = new uPlot(opts, lastData, document.body);
       // chart.render();
       
@@ -134,7 +134,7 @@ window.onload = () => {
           }
           chart.setData(lastData);
           
-          console.log(lastData);
+          // console.log(lastData);
         },
       });
       analyzer.start();
