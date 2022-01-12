@@ -30,7 +30,7 @@ const datasetTemplate = {
 
 let timeLabels = [];
 
-const TOTAL_TICK = 500;
+const TOTAL_TICK = 300;
 
 for(let i=0;i<TOTAL_TICK;i++) {
   timeLabels.push(i.toString());
@@ -76,7 +76,6 @@ window.onload = () => {
         chart = null;
       }
             
-      // let newConfig = JSON.parse(JSON.stringify(configTemplate));
       lastData = [[]];
       
       featureNames.map((item, i) => {
@@ -103,7 +102,7 @@ window.onload = () => {
       const analyzer = Meyda.createMeydaAnalyzer({
         audioContext: audioContent,
         source: audioStream,
-        bufferSize: 512,
+        bufferSize: 256,
         featureExtractors: features,
         callback: (features) => {
           cnt = 0;
