@@ -1,0 +1,158 @@
+<html>
+<head>
+</head>
+<script src="https://cdn.jsdelivr.net/npm/uplot@1.6.7/dist/uPlot.iife.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.7/dist/uPlot.min.css">
+
+<div>
+  <div id="kalman-chart"></canvas>
+</div>
+<body>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/meyda@6.0.0-beta.2/dist/web/meyda.min.js"></script>
+<script src="kalman.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js" integrity="sha512-WFN04846sdKMIP5LKNphMaWzU7YpMyCU245etK3g/2ARYbPK9Ub18eG+ljU96qKRCWh+quCY7yefSmlkQw1ANQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+
+// const features = ['chroma']
+/*
+const featureNames = ["chroma_0", "chroma_1", "chroma_2", "chroma_3", 
+                      "chroma_4", "chroma_5", "chroma_6", "chroma_7", 
+                      "chroma_8", "chroma_9", "chroma_10", "chroma_11"];
+*/
+const features = ['spectralFlux', 'spectralKurtosis'];
+const featureNames = ['spectralFlux', 'spectralKurtosis'];
+
+const datasetTemplate = {
+    name: null,
+    data: []
+};
+
+let timeLabels = [];
+
+const TOTAL_TICK = 500;
+
+for(let i=0;i<TOTAL_TICK;i++) {
+  timeLabels.push(i.toString());
+}
+
+let lastData = [[]];
+
+const opts = {
+  width: 800,
+	height: 600,
+  scales: {
+    x: {
+      time: false,
+      // auto: true
+    }
+  },
+  series: [
+    {},
+  ],
+  axes: [
+    {}, 
+    {
+      values: (u, v) => v
+    }
+  ],
+};
+
+
+
+let chart;
+
+window.onload = () => {
+  
+  var soundAllowed = function (stream) {
+      window.persistAudioStream = stream;
+      var audioContent = new AudioContext();
+      var audioStream = audioContent.createMediaStreamSource( stream );
+      
+      var kf = {};
+      
+      if(chart) {
+        chart.destroy();
+        chart = null;
+      }
+            
+      // let newConfig = JSON.parse(JSON.stringify(configTemplate));
+      lastData = [[]];
+      
+      featureNames.map((item, i) => {
+        kf[item] = new KalmanFilter({R: 0.001, Q: 10});
+        // let temp = JSON.parse(JSON.stringify(datasetTemplate));
+        temp = [];
+        // newConfig.series.push(temp);
+        lastData.push(temp);
+        opts.series.push({
+							label: item,
+							// scale: "mb",
+							value: (u, v) => v == null ? "-" : v,
+							stroke: "blue",
+              // fill: "#0000ff20",
+							// width: 1/devicePixelRatio,
+        });
+      });
+      
+      // chart = new ApexCharts(document.querySelector("#kalman-chart"), newConfig);
+      console.log(opts, lastData);
+      chart = new uPlot(opts, lastData, document.body);
+      // chart.render();
+      
+      const analyzer = Meyda.createMeydaAnalyzer({
+        audioContext: audioContent,
+        source: audioStream,
+        bufferSize: 512,
+        featureExtractors: features,
+        callback: (features) => {
+          cnt = 0;
+          featureNames.map((item, i) => {
+            // console.log(ite;
+            if(item.startsWith('chroma')) {
+              let num = kf[item].filter(features['chroma'][parseInt(item.split('_')[1])]);
+              if(!num) num = 0;
+              lastData[i+1].push(num);
+              
+            } else {
+              let num = kf[item].filter(features[item]);
+              if(!num) num = 0;
+              lastData[i+1].push(num);
+              
+            }
+          });
+          let count;
+          if(lastData[0].length < TOTAL_TICK) {
+            count = lastData[0].length
+          } else {
+            count = lastData[0][lastData[0].length-1] + 1;
+          }
+          lastData[0].push(count);
+          if(lastData[0].length > TOTAL_TICK) {
+            for(let i=0;i<lastData.length;i++) {
+              lastData[i] = lastData[i].slice(lastData[i].length - TOTAL_TICK);
+            }
+          }
+          chart.setData(lastData);
+          
+          console.log(lastData);
+        },
+      });
+      analyzer.start();
+  }
+
+  var soundNotAllowed = function (error) {
+      h.innerHTML = "You must allow your microphone.";
+      console.log(error);
+  }
+
+  /*window.navigator = window.navigator || {};
+  /*navigator.getUserMedia =  navigator.getUserMedia       ||
+                            navigator.webkitGetUserMedia ||
+                            navigator.mozGetUserMedia    ||
+                            null;*/
+  navigator.getUserMedia({audio:true}, soundAllowed, soundNotAllowed);
+}
+
+</script>
+</html>
