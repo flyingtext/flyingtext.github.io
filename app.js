@@ -19,6 +19,72 @@ let progressCount = 0;
 let totalCount = 0;
 let lastCount = 0;
 let $searchProgressBar = $('#search-progress-bar');
+let globalResultObj = null;
+let globalProcessedHerbs = [];
+
+document.getElementsByClassName('result-visualization-chart-modal-body')[0].addEventListener('mousemove', (e) => {
+  let hoverTooltip = document.getElementsByClassName('result-visualization-chart-tooltip')[0];
+  if(e.layerX != 0 && e.layerY != 0) {
+    hoverTooltip.style.left = (e.clientX - 50) + 'px';
+    hoverTooltip.style.top = (e.clientY - 50) + 'px';
+  }
+});
+
+function visualizationDraw() {
+  /*const data = [
+    { name: 'S1', elems: [0,1,2] },
+    { name: 'S2', elems: [1,2,3] },
+    { name: 'S3', elems: [0,2,4] },
+  ];*/
+  const depths = Object.keys(globalResultObj);
+  let data = [
+    { name: '전체 처방', elems: globalProcessedHerbs }
+  ];
+  console.log(globalResultObj);
+  let key = [];
+  depths.map((depth) => {
+    globalResultObj[depth].map(resultObj => {
+      resultObj.prescConst.map((item, i) => {
+        if(key.includes(item['처방한자명'] + '/' + item.herbConst.join('/'))) return;
+        key.push(item['처방한자명'] + '/' + item.herbConst.join('/'));
+        data.push({name : item['처방한자명'], elems: item.herbConst});
+      });
+    });
+  });
+  console.log(data);
+  const sets = UpSetJS.asSets(data);
+
+  let selection = null;
+  
+
+  function onHover(set) {
+    selection = set;
+    console.log(selection);
+    let hoverTooltip = document.getElementsByClassName('result-visualization-chart-tooltip')[0];
+
+    if(!selection) {
+      hoverTooltip.innerHTML = `<div style="text-align:left;">
+      <div><b>(없음)</b></div>
+      <div>구성 : (없음)</div>
+      </div>`;
+    } else {
+      hoverTooltip.innerHTML = `<div style="text-align:left;">
+      <div><b>${set.name}</b></div>
+      <div>구성 : ${(set.elems.length != 0 ) ? set.elems.join(', ') : '(해당 없음)'}</div>
+      </div>`;
+    }
+    rerender();
+  }
+  function rerender() {
+    const props = { sets: sets,
+      width: window.innerWidth * 0.77,
+      height: window.innerHeight * 0.8,
+      onHover, selection };
+    UpSetJS.renderVennDiagram(document.getElementById('result-visualization-chart'), props);
+  }
+  
+  rerender();
+}
 
 
 function countRecursiveDepth(leftDepth, leftListLength) {
@@ -32,6 +98,7 @@ function countRecursiveDepth(leftDepth, leftListLength) {
     return leftListLength;
   }
 }
+
 
 async function recursiveDepth(totalResult, leftDepth, leftList, prescConst, originalConst, dupTolerance) {
   
@@ -144,14 +211,7 @@ async function recursiveDepth(totalResult, leftDepth, leftList, prescConst, orig
       const dupCount = leftList[i]['herbConst'].length - newCount;
       
       if(dupTolerance < dupCount) {
-        /*
-        let gopArray = [];
-        let tempAddCount = 1;
-        for(let i=(leftList.length - 1).length;i>=(leftList.length - 1 - leftDepth + 1 + 1);i--) {
-          gopArray.push(i);
-        }
-        gopArray.map((item) => { tempAddCount=tempAddCount*item });
-        */
+
         let tempAddCount = countRecursiveDepth(leftDepth - 1, leftList.length - i - 1);
         
         progressCount += tempAddCount;
@@ -348,6 +408,8 @@ function app() {
           const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('search-configuration-option-explanation-modal'));
           modal.toggle();
         }}>검색 옵션 설정 방법 설명 보기</button>
+
+        
       
         <label id="only-add-herb-label" htmlFor={"only-add-herb"}><input type="checkbox" id="only-add-herb" defaultChecked={false} onChange={(e)=>{}}/>去味 배제(加味만 고려)</label>
         <label id="convert-herb-part-label" htmlFor={"convert-herb-part"}><input type="checkbox" id="convert-herb-part" />동일 약재 시 포제 구분 (체크 안 함 권장)</label>
@@ -386,7 +448,7 @@ function app() {
           }
 
           setTargetHerbText('- 조합 대상 선정 : ' + processedHerbs.join(', '));
-          
+          globalProcessedHerbs = processedHerbs;
           let leastMatchHerbNumber = document.getElementById('least-match-herb-number').value;
           let maxBasicHerbNumber = document.getElementById('max-basic-herb-number').value;
           let maxBasicPrescNumber = document.getElementById('max-basic-prescription-number').value;
@@ -396,29 +458,20 @@ function app() {
           // Process #1-2
           
           let stmt;
-          /*
-          stmt = db.prepare(`SELECT 처방한자명, COUNT(*) as fullPrescCount FROM prescp WHERE (순수약재한자명 IN ("${selectedHerbs.join('", "')}")) AND 순수약재한자명 != '' AND (수치전약재명 IS NOT NULL) AND (LENGTH(수치전약재명) != 0) GROUP BY 처방한자명;`);
-          let identifiedPresc = [];
-          while(stmt.step()) {
-            const row = stmt.getAsObject();
-            if(row['fullPrescCount'] == processedHerbs.length) {
-              identifiedPresc.push(row['처방한자명']);
-            }
-          }
-          */
+
           // Process #2
           
           
           
           if(!document.getElementById("convert-herb-part").checked) {
-            // stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE (순수약재한자명 IN ("${processedHerbs.join('", "')}")) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(순수약재한자명) as herbConst FROM prescp WHERE 순수약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전 ORDER BY q3.herbCount, q3.출전 DESC;`);
+
             stmt = db.prepare(`SELECT DISTINCT q4.처방한자명 as 처방한자명, q4.처방한글명 as 처방한글명, q4.herbCount as herbCount, q4.herbConst as herbConst, q4.basicCount as basicCount, group_concat(CASE WHEN q4.출전="" THEN '미상' ELSE q4.출전 END) as 출전 FROM 
             
             (SELECT * FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE (순수약재한자명 IN ("${processedHerbs.join('", "')}")) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(순수약재한자명) as herbConst FROM prescp WHERE 순수약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전) as q4
             
             GROUP BY q4.herbConst ORDER BY q4.herbCount, group_concat(CASE WHEN q4.출전="" THEN '미상' ELSE q4.출전 END) DESC;`);
           } else {
-            // stmt = db.prepare(`SELECT DISTINCT q3.처방한자명 as 처방한자명, q3.처방한글명 as 처방한글명, q3.herbCount as herbCount, q3.herbConst as herbConst, q3.basicCount as basicCount, q3.출전 as 출전, q3.출처 as 출처, q3.페이지 as 페이지 FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE (약재한자명 IN ("${processedHerbs.join('", "')}")) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(약재한자명) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전 ORDER BY q3.herbCount, q3.출전 DESC;`);
+
             stmt = db.prepare(`SELECT DISTINCT q4.처방한자명 as 처방한자명, q4.처방한글명 as 처방한글명, q4.herbCount as herbCount, q4.herbConst as herbConst, q4.basicCount as basicCount, group_concat(CASE WHEN q4.출전="" THEN '미상' ELSE q4.출전 END) as 출전 FROM 
             
             (SELECT * FROM (SELECT * FROM (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as herbCount FROM prescp WHERE (약재한자명 IN ("${processedHerbs.join('", "')}")) AND 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q1 LEFT OUTER JOIN (SELECT 처방한자명, 처방한글명, 출전, 출처, 페이지, COUNT(*) as basicCount, group_concat(약재한자명) as herbConst FROM prescp WHERE 약재한자명 != '' GROUP BY 처방한자명, 처방한글명, 출전, 출처, 페이지) as q2 ON q1.처방한자명=q2.처방한자명 AND q1.처방한글명=q2.처방한글명 AND q1.출전=q2.출전 AND q1.출처=q2.출처 AND q1.페이지=q2.페이지 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전) as q4
@@ -434,7 +487,7 @@ function app() {
             }
             if(row['herbCount'] == processedHerbs.length) continue;
             if(row['herbCount'] / row['basicCount'] <= 0.5) continue;
-            // if(identifiedPresc.indexOf(row['처방한자명']) != -1) continue;
+
             row['herbConst'] = row['herbConst'].split(',');
             _prescp.push(row);
           }
@@ -450,7 +503,7 @@ function app() {
           let gopArray = [];
           for(let i=1;i<=maxBasicPrescNumber;i++) {
             let tempTotal = countRecursiveDepth(i, _prescp.length);
-            // console.log('tempTotal', tempTotal);
+
             totalCount += tempTotal;
           }
           
@@ -513,6 +566,15 @@ function app() {
           
 
         }}>가감 조합 검색</button>
+        <br></br>
+        <br></br>        
+        <button className="form-control btn inline-block btn-primary" onClick={(e)=>{
+          globalResultObj = resultObj;
+          visualizationDraw();
+          console.log(globalResultObj);
+          const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('result-visualization-modal'));
+          modal.toggle();
+        }}>검색 결과 시각화</button>
         <div>
         <br/>
           <div><b>1. 조합 검색 대상 본초 선정</b></div>
@@ -537,50 +599,6 @@ function app() {
                           // const prescPage = item.prescConst.map((item) => item['페이지'].toString());
                           
                           const prescInside = item.prescConst.map((item) => item['herbConst']);
-                          /*
-                          let resultString = '';
-                          if(prescFrom[0] != '') {
-                            // resultString = `${presc[0]}` + '[' + prescFrom[0] + '/' + prescFromBook[0] + '/' + prescPage[0] + 'p]' + `(${prescInside[0].join(', ')})`;
-                            resultString = `${presc[0]}` + '[' + prescFrom[0] + ']' + `(${prescInside[0].join(', ')})`;
-                          } else {
-                            resultString = `${presc[0]}` + '[미상]' + `(${prescInside[0].join(', ')})`;
-                          }
-                          <span>보중익기탕</span>
-                          for(let n=1;n<presc.length;n++) {
-                            if(prescFrom[n] != '') {
-                              resultString = resultString + ' 合 ' + presc[n] + '[' + prescFrom[n] + ']' + '(' + prescInside[n].join(', ') + ')';
-                            } else {
-                              resultString = resultString + ' 合 ' + presc[n] + '[미상]' + '(' + prescInside[n].join(', ') + ')';
-                            }
-
-                          }
-                          return <li><b>{resultString}</b><span className="add-remove-count">&nbsp;中 加味 {item.leftOver.length.toString()}&nbsp;減味 {item.overAdded.length.toString()}</span>
-                            <ul>
-                            {(item.leftOver.length != 0) && <li>加 {item.leftOver.join(', ')}</li>}
-                              {(item.overAdded.length != 0) && <li>減 {item.overAdded.join(', ')}</li>}
-                            </ul>
-                          </li>
-                          */
-                          console.log(presc.map((prescItem, j) => {
-                                  if(j != (presc.length - 1)) {
-                                    return <span>
-                                      <span>{prescItem}</span>
-                                      <span>[{prescFrom[j]}]</span>
-                                      <span>
-                                      ({prescInside[j].join(', ')})
-                                      </span>
-                                      <span> 合 </span>
-                                    </span>
-                                  } else {
-                                    return <span>
-                                      <span>{prescItem}</span>
-                                      <span>[{prescFrom[j]}]</span>
-                                      <span>
-                                      ({prescInside[j].join(', ')})
-                                      </span>
-                                    </span>
-                                  }
-                                }));
                           return <li>
                             
                                 {presc.map((prescItem, j) => {
