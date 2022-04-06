@@ -1,0 +1,126 @@
+#content {
+  display: inline-flex;
+  width: 100%;
+}
+#add-list {
+  display: inline-block;
+}
+#prescription-list {
+  display: inline-block;
+  margin: 10px;
+}
+#prescription-list-select {
+  height: 240px;
+  width: 310px;
+  font-size: 9pt;
+}
+#herb-list {
+  display: inline-block;
+  margin: 10px;
+}
+#herb-list-select {
+  height: 240px;
+  width: 310px;
+  font-size: 9pt;
+}
+#analysis-target {
+  height: 95%;
+  display: inline-block;
+  margin: 10px;
+  bottom: 10px;
+}
+#analysis-target-list {
+  height: 640px;
+  width: 200px;
+}
+#prescription-list-search {
+  width: 100%;
+}
+#herb-list-search {
+  width: 100%;
+}
+#herb-select-board {
+  display: inline-block;
+  width: auto;
+  min-width: 618px;
+}
+#analysis-board {
+  display: inline-block;
+  height: 640px;
+  width: 100%;
+  margin: 10px;
+}
+
+#only-add-herb-label {
+  display: block;
+}
+
+#convert-herb-part-label {
+  display: block;
+}
+#least-match-herb-number-label {
+  display: block;
+  /*display: inline-block;*/
+}
+#least-match-herb-number {
+  /*display:inline-block;*/
+  width: 50px;
+}
+#max-basic-herb-number-label {
+  display: block;
+}
+#max-basic-herb-number {
+  width: 50px;
+}
+#max-basic-prescription-number-label {
+  display: block;
+}
+#max-basic-prescription-number {
+  width: 50px;
+}
+#duplicate-tolerance-number-label {
+  display: block;
+}
+#duplicate-tolerance-number {
+  width: 50px;
+}
+
+#addition-to-optimization-number-label {
+  display: block;
+}
+#addition-to-optimization-number {
+  width: 50px;
+}
+
+body {
+  margin : 10px;
+}
+p {
+  margin: 0px !important;
+}
+
+.presc-name {
+  font-weight: 600;
+  font-size: 16pt;
+}
+
+.presc-from {
+  font-size: 8pt;
+  text-overflow: ellipsis;
+  max-width: 100px;
+  overflow: hidden;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.presc-inside {
+  font-size: 14pt;
+}
+
+.add-herb {
+  font-size: 14pt;
+}
+
+.remove-herb {
+  font-size: 14pt;
+}

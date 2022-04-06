@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0"/>
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="-1">
+<title>한의학 처방 기본방 가감 분석기 - flyingtext</title>
+<script
+  src="https://code.jquery.com/jquery-3.6.0.min.js"
+  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+  crossorigin="anonymous"></script>
+<script type="text/javascript" src="//wcs.naver.net/wcslog.js"></script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-M3PH4J0T5D"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-M3PH4J0T5D');
+</script>
+<script type="text/javascript">
+if(!wcs_add) var wcs_add = {};
+wcs_add["wa"] = "115cc2ac4d86ed0";
+if(window.wcs) {
+wcs_do();
+}
+</script>
+</head>
+<body>
+<h2>한의학 처방 기반 처방 구성 가감 분석기</h2> 
+<div style="float:right;"><div style="font-size:9pt;">현재 접속 통계</div><script id="_waui2x">var _wau = _wau || []; _wau.push(["classic", "xej6rj45zx", "i2x"]);</script><script async src="//waust.at/c.js"></script></div>
+<ul>
+  <li>본 웹 프로그램은 특정 한의학 처방을 여러 개의 기본방과 가감으로 분석해줍니다.</li>
+  <li>모든 연산은 웹 브라우저에서 돌아갑니다. 따라서 사용자 본인의 컴퓨터 성능이 중요합니다.</li>
+  <li>본 웹 프로그램 사용으로 인한 모든 책임은 사용자 본인에게 있습니다.</li>
+  <li>제작자 flyingtext at nate.com (버전 44, 마지막 배포 : 2022-02-24 22:00)</li>
+  <li>처방 자료는 한국한의학연구원의 처방 공공 데이터(<a href="https://www.bigdata-forest.kr/product/TKM002601" target="_blank">링크</a>, Creative Commons BY 4.0)를 기반으로 하였습니다.</li>
+</ul>
+<div id="app"></div>
+
+<div id="search-progress-modal" class="modal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">검색 중</h5>
+        <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>-->
+      </div>
+      <div class="modal-body">
+        <div class="progress">
+          <div id="search-progress-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="search-configuration-option-explanation-modal" class="modal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">검색 옵션 설정 방법 설명</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+      <p><span><b>1. 去味 배제(加味만 고려)</b></span></p>
+        <p><b><span><b>검색 속도 영향&nbsp;<b>★<b><span><b><b>★</b></b></span></b><b><span><b><b><b>☆</b></b></b></span></b><b><span><b><b><b>☆</b></b></b></span></b><b>☆</b></b></b></span></b></p>
+        <p>기본방을 검색할 때 가미만 고려하고, 감미는 없도록 하는 옵션입니다.</p>
+        <p>&nbsp;</p>
+        
+        <p><span><b>2. <span>동일 약재 시 포제 구분 (체크 안 함 권장)</span></b></span></p>
+        <p><b><span><b>검색 속도 영향&nbsp;<b>★<b><span><b><b><b>☆</b></b></b></span></b><b><span><b><b><b>☆</b></b></b></span></b><b><span><b><b><b>☆</b></b></b></span></b><b>☆</b></b></b></span></b></p>
+        <p>쉽게 말해 '당귀미'와 '당귀'를 구분하지 않겠다는 설정입니다. 만일 구분이 필요하시다면 체크하시면 됩니다.</p>
+        <p>&nbsp;</p>
+        
+        <p><span><b>3. <span>기본방에서 이름에 "가미" 혹은 "가감"이 들어간 처방은 제외</span></b></span></p>
+        <p><b><span><b>검색 속도 영향&nbsp;<b>★<b><span><b><b><b>☆</b></b></b></span></b><b><span><b><b><b>☆</b></b></b></span></b><b><span><b><b><b>☆</b></b></b></span></b><b>☆</b></b></b></span></b></p>
+        <p>분석 대상 처방의 기본방을 검색할 때 기본방의 이름에 "가미" 혹은 "가감"이 들어간 처방은 제외합니다.</p>
+        <p>예를 들어 본 옵션이 체크된 경우 "이진탕"의 기본방을 검색할 때 "가감이진탕"을 제외합니다.</p>
+        <p>&nbsp;</p>
+        
+        <p><span><b>4. <span>기본방 최소 일치 본초 수</span></b></span></p>
+        <p><b><span><b>검색 속도 영향&nbsp;<b>★<b><span><b><b>★</b></b></span></b><b><span><b><b>★</b></b></span></b><b><span><b><b>★</b></b></span></b><b>☆</b></b></b></span></b></p>
+        <p>처방을 구성하는 기본방으로 인식할 때 해당해야하는 최소한의 본초 수입니다.</p>
+        <p>즉 분석 대상 처방 안에 A라는 처방이 기본방인 경우, A와 분석 대상 처방과 겹쳐야 하는 최소한의 본초 수 입니다.</p>
+        <p>&nbsp;</p>
+        <p><span><b>5. <span>기본방 최대 본초 수</span></b></span></p>
+        <p><b><span><b>검색 속도 영향&nbsp;<b>★<b><span><b><b>★<b><span><b><b><b>☆</b></b></b></span></b><b><span><b><b><b>☆</b></b></b></span></b></b></b></span></b><b>☆</b></b></b></span></b></p>
+        <p>분석 대상 처방 안에 A라는 처방이 기본방인지 확인할 경우에,</p>
+        <p>A의 본초 구성을 최대 몇 개 까지 허락해야하는지에 대한 설정입니다.</p>
+        <p>가령 팔미를 분석할 때, 이 설정이 6이면 육미가 포함되고 6미만인 뭐 예를 들어 5이면 육미가 포함 안되겠죠.</p>
+        <p>&nbsp;</p>
+        <p><span><b>6. <span>최대 기본방 갯수</span></b></span></p>
+        <p><b><span><b>검색 속도 영향&nbsp;<b>★<b><span><b><b>★<b><span><b><b><b><span><b><b>★</b></b></span></b></b></b></span></b><b><span><b><b><b><span><b><b>★</b></b></span></b></b></b></span></b><b><span><b><b><b><span><b><b>★</b></b></span></b></b></b></span></b></b></b></span></b></b></b></span></b></p>
+        <p>분석 대상 처방 안에 몇 개 까지의 기본방을 허락할지 검색하는 옵션입니다.</p>
+        <p>&nbsp;</p>
+        <p><span><b>7. <span>기본방 간 중복 허용 갯수</span></b></span></p>
+        <p><b><span><b>검색 속도 영향&nbsp;<b>★<b><span><b><b>★<b><span><b><b><b><span><b><b>★</b></b></span></b></b></b></span></b><b><span><b><b><b><span><b><b>★</b></b></span></b></b></b></span></b><b><span><b><b><b><span><b><b>★</b></b></span></b></b></b></span></b></b></b></span></b></b></b></span></b></p>
+        <p>분석 대상 처방 안에 기본방들이 있으면 그 기본방 끼리 서로 겹치는 최대 본초 갯수를 설정하는 옵션입니다.</p>
+        <p>&nbsp;</p>
+        <p><span><b>8. 최적 가미 대비 추가 여유</b></span></p>
+        <p><b><span><b>검색 속도 영향&nbsp;<b>★<b><span><b><b>★</b></b></span></b><b><span><b><b><b>☆</b></b></b></span></b><b><span><b><b><b>☆</b></b></b></span></b><b>☆</b></b></b></span></b></p>
+        <p>검색된 기본방에 의한 최적 가미 수보다 추가 가미를 몇 개 까지 허용할지 설정하는 옵션입니다.</p>
+        <p>가령 우거신기환을 분석할 때, 팔미를 기본방으로 보면 (이에 남게 되는) 가미 수는 2개가 되는데요.</p>
+        <p>이는 검색 결과 중 가장 적은 값이므로 최적 가미 수가 됩니다.</p>
+        <p>이 옵션은 여기서 추가로 몇 개 까지 결과로 나타낼지 설정합니다.</p>
+        <p>위 사례에서 만일 이 옵션이 2가 되어 있으면 육미까지 결과 값이 나오게 됩니다.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="result-visualization-modal" class="modal" tabindex="-1">
+  <div class="modal-dialog modal-lg result-visualization-chart-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">검색 결과 시각화</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body result-visualization-chart-modal-body">
+        <span class="result-visualization-chart-tooltip"></span>
+        <div id="result-visualization-chart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+<style>
+    #result-visualization-chart {
+    width: 100%;
+    height: 100%;
+  }
+  .result-visualization-chart-lg, .result-visualization-chart-lg > .modal-content {
+    width: 90vw !important;
+    height: 90vh !important;
+    max-width: unset !important;
+    max-height: unset !important;
+  }
+  .result-visualization-chart-tooltip {display: none; position: absolute; color: #fff; background: #000; padding: 5px;}
+  .modal-body {position: relative;}
+  .modal-body:hover .result-visualization-chart-tooltip {display: block; text-align: center;}
+</style>
+
+<script src="https://unpkg.com/@upsetjs/bundle"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.1/sql-asm.min.js"></script>
+<script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+<link href="./app_v2.css?version=v3" rel="stylesheet" type="text/css">
+<script src="./app_v2.js?version=v45" type="text/babel"></script>
+
+</html>
