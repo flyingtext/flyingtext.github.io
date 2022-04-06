@@ -21,6 +21,7 @@ let lastCount = 0;
 let $searchProgressBar = $('#search-progress-bar');
 let globalResultObj = null;
 let globalProcessedHerbs = [];
+let globalConversion = {};
 
 document.getElementsByClassName('result-visualization-chart-modal-body')[0].addEventListener('mousemove', (e) => {
   let hoverTooltip = document.getElementsByClassName('result-visualization-chart-tooltip')[0];
@@ -265,7 +266,7 @@ function app() {
   
   if(!db) {
     initSqlJs(config).then(function(SQL){
-    const dataPromise = fetch("./static/data_new.sqlite").then(res => res.arrayBuffer()).then((data)=>{
+    const dataPromise = fetch("./static/data_new_without_prescription_method.sqlite").then(res => res.arrayBuffer()).then((data)=>{
       const db = new SQL.Database(new Uint8Array(data));
       setDB(db);
     });
@@ -273,13 +274,25 @@ function app() {
   }
   
   if((Object.keys(herbs).length == 0) && db) {
-    const stmt = db.prepare("SELECT DISTINCT 약재명 FROM prescription_structure WHERE ((약재명 LIKE '%(%') = FALSE) AND 약재명 != '';");
+    let stmt = db.prepare(`SELECT DISTINCT hanja, korean FROM herb_convert;`);
+    let conversion = {};
+    while(stmt.step()) {
+      const row = stmt.getAsObject();
+      conversion[row['hanja']] = row['korean'];
+    }
+    
+    globalConversion = conversion;
+    console.log(globalConversion);
+
+    stmt = db.prepare("SELECT DISTINCT 약재명 FROM prescription_structure WHERE ((약재명 LIKE '%(%') = FALSE) AND 약재명 != '';");
+    
     let _herbs = {};
     while(stmt.step()) {
       const row = stmt.getAsObject();
-      _herbs[row['약재명'].replace(/\((.*)\)/g, '')] = row['약재명'].replace(/\((.*)\)/g, '');
+      if(globalConversion[row['약재명'].replace(/\((.*)\)/g, '')]) {
+        _herbs[row['약재명'].replace(/\((.*)\)/g, '')] = row['약재명'].replace(/\((.*)\)/g, '');
+      }
     }
-    
     setHerbs(_herbs);
   }
   
@@ -288,7 +301,7 @@ function app() {
     let _prescriptions = {};
     while(stmt.step()) {
       const row = stmt.getAsObject();
-      _prescriptions[row['처방명'].replace(/\((.*)\)/g, '') + ((row['출전출처']) ? ('[' +  row['출전출처'] + ']') : '')] = row['처방명'].replace(/\((.*)\)/g, '') + '/' + row['출전출처'];
+      _prescriptions[row['처방명'] + ((row['출전출처']) ? ('[' +  row['출전출처'] + ']') : '')] = row['처방명'] + '/' + row['출전출처'];
     }
     
     setPrescriptions(_prescriptions);
@@ -320,23 +333,23 @@ function app() {
               if(selArray.length == 0) return;
               const prescp = selArray[0].value;
               const prescpHanja = prescp.split('/')[0];
-              const prescpHangul = prescp.split('/')[1];
-              const prescpOriginalFrom = prescp.split('/')[2];
-              const prescpFrom = prescp.split('/')[3];
-              const prescpPage = prescp.split('/')[4];
+              // const prescpHangul = prescp.split('/')[1];
+              const prescpOriginalFrom = prescp.split('/')[1];
+              // const prescpFrom = prescp.split('/')[3];
+              // const prescpPage = prescp.split('/')[4];
               console.log(prescp.split('/'));
               let stmt;
+
               if(prescp.split('/')[4] == '(미기재)') {
-                stmt = db.prepare(`SELECT DISTINCT 약재명 FROM prescription_structure WHERE 처방명 = '${prescpHanja}' AND 출전='${prescpOriginalFrom}' AND 출처='${prescpFrom}' AND 약재명 != '' AND 약재명 IS NOT NULL AND 약재타입 != 'F';`);
+                stmt = db.prepare(`SELECT DISTINCT 약재명 FROM prescription_structure WHERE 처방명 = '${prescpHanja}' AND 출전출처='${prescpOriginalFrom}' AND 약재명 != '' AND 약재명 IS NOT NULL;`);
               } else {
-                stmt = db.prepare(`SELECT DISTINCT 약재명 FROM prescription_structure WHERE 처방명 = '${prescpHanja}' AND 출전='${prescpOriginalFrom}' AND 출처='${prescpFrom}' AND 약재명 != '' AND 약재명 IS NOT NULL AND 약재타입 != 'F';`);
+                stmt = db.prepare(`SELECT DISTINCT 약재명 FROM prescription_structure WHERE 처방명 = '${prescpHanja}' AND 출전출처='${prescpOriginalFrom}' AND 약재명 != '' AND 약재명 IS NOT NULL;`);
               }
               
               let _herbs = [];
               while(stmt.step()) {
                 const row = stmt.getAsObject();
-                
-                _herbs.push(row['약재명'].replace(/\((.*)\)/g, ''))
+                _herbs.push(row['약재명']);//.replace(/\((.*)\)/g, ''))
               }
               
               let newHerbs = [...new Set([..._herbs, ...selectedHerbs])];
@@ -358,7 +371,7 @@ function app() {
               <select id="herb-list-select" name="herb-list-select" multiple="multiple" size={15}>  
               {
                 Object.keys(herbs).filter(item => (selectedHerbs.indexOf(item) == -1)).filter((item) => (item.indexOf(filterHerbs) != -1) || (herbs[item].indexOf(filterHerbs) != -1)).map((item, i) => {
-                  return <option value={item}>{item + '(' + herbs[item] + ')'}</option>
+                  return <option value={item}>{item + '(' + globalConversion[item] + ')'}</option>
                 })
               }
               </select>
@@ -429,7 +442,7 @@ function app() {
           // Process #1-1
           let processedHerbs = [];
           if(!document.getElementById("convert-herb-part").checked) {
-            const stmt = db.prepare(`SELECT DISTINCT 약재명, 수치전약재명, 순수약재명 FROM prescription_structure WHERE (약재명 IN ("${selectedHerbs.join('", "')}")) AND 순수약재명 != '';`);
+            const stmt = db.prepare(`SELECT DISTINCT 약재명, 순수약재명 FROM prescription_structure WHERE (약재명 IN ("${selectedHerbs.join('", "')}")) AND 순수약재명 != '';`);
             let _herbs = {};
             while(stmt.step()) {
               const row = stmt.getAsObject();
@@ -467,7 +480,7 @@ function app() {
 
             stmt = db.prepare(`SELECT DISTINCT q4.처방명 as 처방명, q4.herbCount as herbCount, q4.herbConst as herbConst, q4.basicCount as basicCount, group_concat(CASE WHEN q4.출전출처="" THEN '미상' ELSE q4.출전출처 END) as 출전출처 FROM 
             
-            (SELECT * FROM (SELECT * FROM (SELECT 처방명, 출전출처, COUNT(*) as herbCount FROM prescription_structure WHERE (순수약재명 IN ("${processedHerbs.join('", "')}")) AND 약재명 != '' GROUP BY 처방명, 출전출처) as q1 LEFT OUTER JOIN (SELECT 처방명, 출전, 출처, COUNT(*) as basicCount, group_concat(순수약재명) as herbConst FROM prescription_structure WHERE 순수약재명 != '' GROUP BY 처방명, 출전, 출처) as q2 ON q1.처방명=q2.처방명 AND q1.출전출처=q2.출전출처 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전출처) as q4
+            (SELECT * FROM (SELECT * FROM (SELECT 처방명, 출전출처, COUNT(*) as herbCount FROM prescription_structure WHERE (순수약재명 IN ("${processedHerbs.join('", "')}")) AND 약재명 != '' GROUP BY 처방명, 출전출처) as q1 LEFT OUTER JOIN (SELECT 처방명, 출전출처, COUNT(*) as basicCount, group_concat(순수약재명) as herbConst FROM prescription_structure WHERE 순수약재명 != '' GROUP BY 처방명, 출전출처) as q2 ON q1.처방명=q2.처방명 AND q1.출전출처=q2.출전출처 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전출처) as q4
             
             GROUP BY q4.herbConst ORDER BY q4.herbCount, group_concat(CASE WHEN q4.출전출처="" THEN '미상' ELSE q4.출전출처 END) DESC;`);
           } else {
