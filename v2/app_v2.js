@@ -400,7 +400,7 @@ function app() {
               }}></input><br />
               <select id="herb-list-select" name="herb-list-select" multiple="multiple" size={15}>  
               {
-                Object.keys(herbs).filter(item => (selectedHerbs.indexOf(item) == -1)).filter((item) => (item.indexOf(filterHerbs) != -1) || (herbs[item].indexOf(filterHerbs) != -1)).map((item, i) => {
+                Object.keys(herbs).filter(item => (selectedHerbs.indexOf(item) == -1)).filter((item) => (item.indexOf(filterHerbs) != -1) || (globalConversion[item].indexOf(filterHerbs) != -1)).map((item, i) => {
                   return <option value={item}>{item + '(' + globalConversion[item] + ')'}</option>
                 })
               }
