@@ -436,7 +436,7 @@ function app() {
           let newSelectedHerbs = JSON.parse(JSON.stringify(selectedHerbs));
           setSelectedHerbs(newSelectedHerbs.filter(item => toBeDeleted.indexOf(item) == -1));
         }}>선택 본초 제외</button>
-        <button className="form-control btn inline-block btn-primary" onClick={(e) => {
+        <button className="form-control btn inline-block btn-primary" style={{marginTop: 10}} onClick={(e) => {
           setSelectedHerbs([]);
         }}>전체 본초 초기화</button>
       </div>
