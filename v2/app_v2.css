@@ -26,7 +26,7 @@
 #analysis-target {
   height: 95%;
   display: inline-block;
-  margin: 10px;
+  margin: 0px;
   bottom: 10px;
 }
 #analysis-target-list {
@@ -138,4 +138,5 @@ p {
 #db-loading-percentage-inner {
   width: 100%;
   color: white;
+  font-size: 32pt;
 }
