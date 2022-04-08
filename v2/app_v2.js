@@ -501,6 +501,7 @@ function app() {
           let stmt;
 
           // Process #2
+          console.log(processedHerbs);
           
           if(!document.getElementById("convert-herb-part").checked) {
 
