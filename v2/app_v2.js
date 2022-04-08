@@ -510,14 +510,14 @@ function app() {
 
             stmt = db.prepare(`SELECT DISTINCT q4.처방명 as 처방명, q4.herbCount as herbCount, q4.herbConst as herbConst, q4.basicCount as basicCount, group_concat(CASE WHEN q4.출전출처="" THEN '미상' ELSE q4.출전출처 END) as 출전출처 FROM 
             
-            (SELECT * FROM (SELECT * FROM (SELECT 처방명, 출전출처, COUNT(*) as herbCount FROM prescription_structure WHERE (순수약재명 IN ("${processedHerbs.join('", "')}")) AND 약재명 != '' GROUP BY 처방명, 출전출처) as q1 LEFT OUTER JOIN (SELECT 처방명, 출전출처, COUNT(*) as basicCount, group_concat(순수약재명) as herbConst FROM prescription_structure WHERE 순수약재명 != '' GROUP BY 처방명, 출전출처) as q2 ON q1.처방명=q2.처방명 AND q1.출전출처=q2.출전출처 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전출처) as q4
+            (SELECT * FROM (SELECT * FROM (SELECT 처방명, 출전출처, COUNT(*) as herbCount FROM prescription_structure WHERE (순수약재명 IN ("${processedHerbs.join('", "')}")) AND 약재명 != '' GROUP BY 처방명, 출전출처) as q1 LEFT OUTER JOIN (SELECT 처방명, 출전출처, COUNT(*) as basicCount, group_concat(순수약재명 ORDER BY 순수약재명) as herbConst FROM prescription_structure WHERE 순수약재명 != '' GROUP BY 처방명, 출전출처) as q2 ON q1.처방명=q2.처방명 AND q1.출전출처=q2.출전출처 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전출처) as q4
             
             GROUP BY q4.herbConst ORDER BY q4.herbCount, group_concat(CASE WHEN q4.출전출처="" THEN '미상' ELSE q4.출전출처 END) DESC;`);
           } else {
 
             stmt = db.prepare(`SELECT DISTINCT q4.처방명 as 처방명, q4.herbCount as herbCount, q4.herbConst as herbConst, q4.basicCount as basicCount, group_concat(CASE WHEN q4.출전출처="" THEN '미상' ELSE q4.출전출처 END) as 출전출처 FROM 
             
-            (SELECT * FROM (SELECT * FROM (SELECT 처방명, 출전출처, COUNT(*) as herbCount FROM prescription_structure WHERE (약재명 IN ("${processedHerbs.join('", "')}")) AND 약재명 != '' GROUP BY 처방명, 출전출처) as q1 LEFT OUTER JOIN (SELECT 처방명, 출전출처, COUNT(*) as basicCount, group_concat(약재명) as herbConst FROM prescription_structure WHERE 약재명 != '' GROUP BY 처방명, 출전출처) as q2 ON q1.처방명=q2.처방명 AND q1.출전출처=q2.출전출처 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전출처) as q4
+            (SELECT * FROM (SELECT * FROM (SELECT 처방명, 출전출처, COUNT(*) as herbCount FROM prescription_structure WHERE (약재명 IN ("${processedHerbs.join('", "')}")) AND 약재명 != '' GROUP BY 처방명, 출전출처) as q1 LEFT OUTER JOIN (SELECT 처방명, 출전출처, COUNT(*) as basicCount, group_concat(약재명 ORDER BY 약재명) as herbConst FROM prescription_structure WHERE 약재명 != '' GROUP BY 처방명, 출전출처) as q2 ON q1.처방명=q2.처방명 AND q1.출전출처=q2.출전출처 WHERE q1.herbCount >= ${leastMatchHerbNumber} AND q2.basicCount <= ${maxBasicHerbNumber}) as q3 GROUP BY q3.herbConst, q3.출전출처) as q4
             
             GROUP BY q4.herbConst ORDER BY q4.herbCount, group_concat(CASE WHEN q4.출전출처="" THEN '미상' ELSE q4.출전출처 END) DESC;`);
           }
