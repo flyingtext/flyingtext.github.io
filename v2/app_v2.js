@@ -266,11 +266,41 @@ function app() {
   
   if(!db) {
     initSqlJs(config).then(function(SQL){
-    const dataPromise = fetch("./static/data_new_without_prescription_method.sqlite").then(res => res.arrayBuffer()).then((data)=>{
-      const db = new SQL.Database(new Uint8Array(data));
-      setDB(db);
+      /*const dataPromise = fetch("./static/data_new_without_prescription_method.sqlite").then(res => res.arrayBuffer()).then((data)=>{
+        const db = new SQL.Database(new Uint8Array(data));
+        setDB(db);
+      });*/
+      $.ajax({
+          url: "./static/data_new_without_prescription_method.sqlite",
+          method: 'GET',
+          xhrFields: {
+              responseType: 'blob'
+          },
+          xhr: function () {
+              var xhr = new window.XMLHttpRequest();
+              xhr.addEventListener("progress", function (evt) {
+                  if(evt.lengthComputable) {
+                      var percentComplete = evt.loaded / evt.total;
+                      console.log(percentComplete);
+                      let text = (Math.round(percentComplete * 10000) / 100).toString() + '%';
+                      if((Math.round(percentComplete * 10000) / 100) > 90) {
+                        text = text + ' (DB 로딩으로 시간 소요)'
+                      }
+                      $('#db-loading-percentage-inner').text(text);
+                  }
+              }, false);
+              return xhr;
+          },
+          success: async function (data) {
+            const dataBuffer = await(new Promise((resolve, reject) => {
+              resolve(data.arrayBuffer());
+            }));
+            const db = new SQL.Database(new Uint8Array(dataBuffer));
+            $('#db-loading-percentage').css('display', 'none');
+            setDB(db);
+          }
+      });
     });
-  });
   }
   
   if((Object.keys(herbs).length == 0) && db) {
