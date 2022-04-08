@@ -5,33 +5,20 @@
 #add-list {
   display: inline-block;
 }
-#prescription-list {
-  display: inline-block;
-  margin: 10px;
+#search-prescription-select {
+  width: 300px;
 }
-#prescription-list-select {
-  height: 240px;
-  width: 310px;
-  font-size: 9pt;
-}
-#herb-list {
-  display: inline-block;
-  margin: 10px;
-}
-#herb-list-select {
-  height: 240px;
-  width: 310px;
-  font-size: 9pt;
+#search-herb-select {
+  width: 300px;
 }
 #analysis-target {
-  height: 95%;
-  display: inline-block;
-  margin: 0px;
-  bottom: 10px;
+  width: 300px;
 }
 #analysis-target-list {
-  height: 640px;
-  width: 200px;
+  /* height: 640px;
+  width: 200px;*/
+  height: 100%;
+  width: 100%;
 }
 #prescription-list-search {
   width: 100%;
@@ -42,13 +29,13 @@
 #herb-select-board {
   display: inline-block;
   width: auto;
-  min-width: 618px;
+  /* min-width: 618px; */
 }
 #analysis-board {
   display: inline-block;
   height: 640px;
   width: 100%;
-  margin: 10px;
+  margin: 0px;
 }
 
 #only-add-herb-label {

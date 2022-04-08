@@ -259,6 +259,10 @@ function app() {
   const [filterHerbs, setFilterHerbs] = React.useState('');
   const [prescriptions, setPrescriptions] = React.useState({});
   const [filterPrescp, setFilterPrescp] = React.useState('');
+
+  const [herbsArray, setHerbsArray] = React.useState([]);
+  const [prescriptionsArray, setPrescriptionsArray] = React.useState([]);
+
   const [selectedHerbs, setSelectedHerbs] = React.useState([]);
   const [targetHerbText, setTargetHerbText] = React.useState('');
   const [resultObj, setResultObj] = React.useState({});
@@ -302,6 +306,7 @@ function app() {
       });
     });
   }
+
   
   if((Object.keys(herbs).length == 0) && db) {
     let stmt = db.prepare(`SELECT DISTINCT hanja, korean FROM herb_convert;`);
@@ -317,112 +322,102 @@ function app() {
     stmt = db.prepare("SELECT DISTINCT 약재명 FROM prescription_structure WHERE ((약재명 LIKE '%(%') = FALSE) AND 약재명 != '';");
     
     let _herbs = {};
+    let valueLabels = [];
     while(stmt.step()) {
       const row = stmt.getAsObject();
       if(globalConversion[row['약재명'].replace(/\((.*)\)/g, '')]) {
         _herbs[row['약재명'].replace(/\((.*)\)/g, '')] = row['약재명'].replace(/\((.*)\)/g, '');
+        valueLabels.push({value: row['약재명'].replace(/\((.*)\)/g, ''), label: globalConversion[row['약재명'].replace(/\((.*)\)/g, '')] + '(' + row['약재명'].replace(/\((.*)\)/g, '') + ')'});
       }
     }
     setHerbs(_herbs);
+    setHerbsArray(valueLabels);
   }
   
   if((Object.keys(prescriptions).length == 0) && db) {
     const stmt = db.prepare("SELECT DISTINCT 처방명, 출전출처 FROM prescription_structure WHERE 처방명 != '';");
     let _prescriptions = {};
+    let valueLabels = [];
     while(stmt.step()) {
       const row = stmt.getAsObject();
       _prescriptions[row['처방명'] + ((row['출전출처']) ? ('[' +  row['출전출처'] + ']') : '')] = row['처방명'] + '/' + row['출전출처'];
+      valueLabels.push({value: row['처방명'] + '/' + row['출전출처'], label: row['처방명'] + ((row['출전출처']) ? ('[' +  row['출전출처'] + ']') : '')});
     }
     
     setPrescriptions(_prescriptions);
+    setPrescriptionsArray(valueLabels);
   }
-  
-  
-  return <div id="content">
-  
-    <div id="herb-select-board">
-      <div id="add-list">
-        <div className="card" id="prescription-list">
-          <div className="card-body">
-            <div className="inline-block">
-              <h6>처방으로 본초 추가</h6>
-              <input id="prescription-list-search" type="text" onChange={(e) => {
-                setFilterPrescp(e.target.value);
-              }}></input><br />
-              <select id="prescription-list-select" name="prescription-list-select" size={15}>  
-              {
-                Object.keys(prescriptions).filter((item) => (item.indexOf(filterPrescp) != -1) || (prescriptions[item].indexOf(filterPrescp) != -1)).map((item, i) => {
-                  return <option value={prescriptions[item]}>{item}</option>
-                })
-              }
-              </select>
-            </div>
-            <button className="form-control btn inline-block btn-primary" onClick={(e) => {
-              const sel = document.getElementById('prescription-list-select');
-              const selArray = Array.from(sel.selectedOptions);
-              if(selArray.length == 0) return;
-              const prescp = selArray[0].value;
-              const prescpHanja = prescp.split('/')[0];
-              // const prescpHangul = prescp.split('/')[1];
-              const prescpOriginalFrom = prescp.split('/')[1];
-              // const prescpFrom = prescp.split('/')[3];
-              // const prescpPage = prescp.split('/')[4];
-              console.log(prescp.split('/'));
-              let stmt;
 
-              if(prescp.split('/')[4] == '(미기재)') {
-                stmt = db.prepare(`SELECT DISTINCT 약재명 FROM prescription_structure WHERE 처방명 = '${prescpHanja}' AND 출전출처='${prescpOriginalFrom}' AND 약재명 != '' AND 약재명 IS NOT NULL;`);
-              } else {
-                stmt = db.prepare(`SELECT DISTINCT 약재명 FROM prescription_structure WHERE 처방명 = '${prescpHanja}' AND 출전출처='${prescpOriginalFrom}' AND 약재명 != '' AND 약재명 IS NOT NULL;`);
-              }
-              
-              let _herbs = [];
-              while(stmt.step()) {
-                const row = stmt.getAsObject();
-                _herbs.push(row['약재명']);//.replace(/\((.*)\)/g, ''))
-              }
-              
-              let newHerbs = [...new Set([..._herbs, ...selectedHerbs])];
-              
-              setSelectedHerbs(newHerbs);
-            }}>선택 처방 추가</button>
-          </div>
-        </div>
-        
-        <br />
-        
-        <div className="card" id="herb-list">
-          <div className="card-body">
-            <div className="inline-block">
-              <h6>목록에서 본초 추가</h6>
-              <input id="herb-list-search" type="text" onChange={(e) => {
-                setFilterHerbs(e.target.value);
-              }}></input><br />
-              <select id="herb-list-select" name="herb-list-select" multiple="multiple" size={15}>  
-              {
-                Object.keys(herbs).filter(item => (selectedHerbs.indexOf(item) == -1)).filter((item) => (item.indexOf(filterHerbs) != -1) || (globalConversion[item].indexOf(filterHerbs) != -1)).map((item, i) => {
-                  return <option value={item}>{item + '(' + globalConversion[item] + ')'}</option>
-                })
-              }
-              </select>
-            </div>
-            <button className="form-control btn inline-block btn-primary" onClick={(e) => {
-              const sel = document.getElementById('herb-list-select');
-              let newSelectedHerbs = JSON.parse(JSON.stringify(selectedHerbs));
-              Array.from(sel.selectedOptions).map((item) => {
-                newSelectedHerbs.push(item.value);
-              });
-              setSelectedHerbs(newSelectedHerbs);
-            }}>선택 본초 추가</button>
-          </div>
-        </div>
+  let [selectedOption, setSelectedOption] = React.useState(null);
+
+  return <div id="content">
+            
+
+    <div id="herb-select-board">
+    
+      <div id="add-list">
+      <Select.Async
+        id="search-prescription-select"
+        value={selectedOption}
+        cacheOptions
+        placeholder={"처방 이름 검색 입력"}
+        onChange={(selectedOption) => {
+          const prescp = selectedOption.value;
+          const prescpHanja = prescp.split('/')[0];
+          // const prescpHangul = prescp.split('/')[1];
+          const prescpOriginalFrom = prescp.split('/')[1];
+          // const prescpFrom = prescp.split('/')[3];
+          // const prescpPage = prescp.split('/')[4];
+          console.log(prescp.split('/'));
+          let stmt;
+
+          if(prescp.split('/')[4] == '(미기재)') {
+            stmt = db.prepare(`SELECT DISTINCT 약재명 FROM prescription_structure WHERE 처방명 = '${prescpHanja}' AND 출전출처='${prescpOriginalFrom}' AND 약재명 != '' AND 약재명 IS NOT NULL;`);
+          } else {
+            stmt = db.prepare(`SELECT DISTINCT 약재명 FROM prescription_structure WHERE 처방명 = '${prescpHanja}' AND 출전출처='${prescpOriginalFrom}' AND 약재명 != '' AND 약재명 IS NOT NULL;`);
+          }
+          
+          let _herbs = [];
+          while(stmt.step()) {
+            const row = stmt.getAsObject();
+            _herbs.push(row['약재명']);//.replace(/\((.*)\)/g, ''))
+          }
+          
+          let newHerbs = [...new Set([..._herbs, ...selectedHerbs])];
+          
+          setSelectedHerbs(newHerbs);
+        }}
+        loadOptions={_.debounce((inputValue, callback) => {
+          const stmt = db.prepare("SELECT DISTINCT 처방명, 출전출처 FROM prescription_structure WHERE 처방명 like '%" + inputValue.replace("'", '') + "%';");
+          let _prescriptions = {};
+          let valueLabels = [];
+          while(stmt.step()) {
+            const row = stmt.getAsObject();
+            _prescriptions[row['처방명'] + ((row['출전출처']) ? ('/ ' +  row['출전출처']) : '')] = row['처방명'] + '/' + row['출전출처'];
+            valueLabels.push({value: row['처방명'] + '/' + row['출전출처'], label: row['처방명'] + ((row['출전출처']) ? ('[' +  row['출전출처'] + ']') : '')});
+          }
+          callback(valueLabels);
+        }, 1000)}
+      />
+
+      <Select
+        id="search-herb-select"
+        value={selectedOption}
+        placeholder={"약재 이름 검색 입력"}
+        onChange={selectedOption => {
+          let newSelectedHerbs = JSON.parse(JSON.stringify(selectedHerbs));
+          newSelectedHerbs.push(selectedOption.value);
+          setSelectedHerbs(newSelectedHerbs);
+        }}
+        options={herbsArray}
+      />
       </div>
     
     <div className="card" id="analysis-target">
       <div className="card-body">
         <div className="inline-block">
           <h6>분석 대상 목록</h6>
-          <select id="analysis-target-list" name="analysis-target-list" size={35} multiple="multiple">  
+          <select id="analysis-target-list" name="analysis-target-list" size={10} multiple="multiple">  
           {
             selectedHerbs.map((item, i) => {
               return <option value={item}>{item}</option>
@@ -460,7 +455,7 @@ function app() {
         
         <label id="least-match-herb-number-label" htmlFor={"least-match-herb-number"}>기본방 최소 일치 본초 수 :&nbsp;<input type="number" id="least-match-herb-number" defaultValue="3" min="1" /></label>
         <label id="max-basic-herb-number-label" htmlFor={"max-basic-herb-number"}>기본방 최대 본초 수 :&nbsp;<input type="number" id="max-basic-herb-number" defaultValue="15" min="1" /></label>
-        <label id="max-basic-prescription-number-label" htmlFor={"max-basic-prescription-number"}>최대 기본방 갯수 :&nbsp;<input type="number" id="max-basic-prescription-number" defaultValue="2" min="1" /></label>
+        <label id="max-basic-prescription-number-label" htmlFor={"max-basic-prescription-number"}>최대 기본방 갯수 :&nbsp;<input type="number" id="max-basic-prescription-number" defaultValue="3" min="1" /></label>
         <label id="duplicate-tolerance-number-label" htmlFor={"duplicate-tolerance-number"}>기본방 간 중복 허용 갯수 :&nbsp;<input type="number" id="duplicate-tolerance-number" defaultValue="1" min="0" /></label>
         
         <label id="addition-to-optimization-number-label" htmlFor={"addition-to-optimization-number"}>최적 가미 대비 추가 여유 :&nbsp;<input type="number" id="addition-to-optimization-number" defaultValue="1" min="0" /></label>

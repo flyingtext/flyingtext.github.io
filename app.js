@@ -595,8 +595,6 @@ function app() {
                         {resultObj[item.toString()] && resultObj[item.toString()].map((item) => {
                           const presc = item.prescConst.map((item) => item['처방한자명']);
                           const prescFrom = item.prescConst.map((item) => item['출전'].toString());
-                          // const prescFromBook = item.prescConst.map((item) => item['출처'].toString());
-                          // const prescPage = item.prescConst.map((item) => item['페이지'].toString());
                           
                           const prescInside = item.prescConst.map((item) => item['herbConst']);
                           return <li>
