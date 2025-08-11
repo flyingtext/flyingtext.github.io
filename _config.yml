@@ -18,6 +18,7 @@ markdown: kramdown
 paginate: 5
 paginate_path: "/page:num/"
 minimal_mistakes_skin: "default"  # "dark", "neon" 등 변경 가능
+search: true
 
 # 네비게이션
 include: ["_pages"]
