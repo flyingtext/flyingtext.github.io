@@ -22,3 +22,14 @@ search: true
 
 # 네비게이션
 include: ["_pages"]
+
+jekyll-archives:
+  enabled:
+    - categories
+    - tags
+  layouts:
+    category: archive
+    tag: archive
+  permalinks:
+    category: /categories/:name/
+    tag: /tags/:name/
